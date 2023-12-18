@@ -1,6 +1,5 @@
 import pygame
 import sys
-from time import sleep
 
 # Initialisation de Pygame
 pygame.init()
@@ -11,6 +10,18 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
 # ---- BASE
+# Image de la base
+base_image = pygame.image.load("assets/images/sprites/turret_base.png")
+base_rect = base_image.get_rect()
+
+# Redimension de la base
+coef = 2
+new_base_size = (base_rect.width//coef, base_rect.height//coef)
+resized_base = pygame.transform.scale(base_image, new_base_size)
+
+# Positionnement de la base
+base_rect.center = (WIDTH//2, HEIGHT//2)
+base_rect = resized_base.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 # ---- TOURELLE
 # Image de la tourelle
@@ -23,7 +34,7 @@ new_turret_size = (turret_rect.width//coef, turret_rect.height//coef)
 resized_turret = pygame.transform.scale(turret_image, new_turret_size)
 
 # Positionnement de la tourelle
-turret_rect.center = (WIDTH // 2, HEIGHT // 2)
+turret_rect.center = (WIDTH//2, HEIGHT//2)
 
 # ---- VARIABLES D'ANIMATION
 # Variables de la boucle principale
@@ -41,6 +52,9 @@ while True:
     # Effacer l'écran
     screen.fill((255, 255, 255))  # Fond blanc
 
+    # Affichage de la base
+    screen.blit(resized_base, base_rect)
+
     # Rotation de la tourelle
     rotated_turret = pygame.transform.rotate(resized_turret, angle)
     rotated_turret_rect = rotated_turret.get_rect(center=turret_rect.center)
@@ -56,7 +70,7 @@ while True:
     print(angle%360)
 
     if angle % 360 >= 180:
-      rotation_speed = 0.5
+      rotation_speed = 0.2
 
     # Limiter la vitesse de la boucle
     clock.tick(60)
