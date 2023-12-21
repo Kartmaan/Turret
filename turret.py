@@ -2,11 +2,20 @@ import sys
 import math
 import pygame
 
-def get_distance(p1, p2):
+def get_distance(p1: tuple, p2: tuple) -> float:
+  """Returns the distance between two coordinates
+
+  Args:
+  p1 : First coordinates
+  p2 : Second coordinates
+
+  Returns:
+  The distance between the two coordinates 
+  """
   distance = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
   return distance
 
-def get_angle(p1, p2):
+def get_angle(p1:tuple, p2:tuple) -> float:
   angle_rad = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
   angle_deg = math.degrees(angle_rad)
   return angle_deg
@@ -48,6 +57,7 @@ base_rect = base_image.get_rect()
 coef = 2 #2
 new_base_size = (base_rect.width//coef, base_rect.height//coef)
 resized_base = pygame.transform.smoothscale(base_image, new_base_size)
+print(resized_base)
 
 # Positionnement de la base
 base_rect.center = (WIDTH//2, HEIGHT//2)
@@ -62,9 +72,22 @@ turret_rect = turret_image.get_rect()
 coef = 1.5 #1.5
 new_turret_size = (turret_rect.width//coef, turret_rect.height//coef)
 resized_turret = pygame.transform.smoothscale(turret_image, new_turret_size)
+print(resized_turret)
 
 # Positionnement de la tourelle
 turret_rect.center = (WIDTH//2, HEIGHT//2)
+
+# ---- ROTATING LASER
+# Position initiale
+rect = resized_turret.get_rect()
+center = (WIDTH//2, HEIGHT//2)
+
+# Rayon de rotation de center
+radius_vector = pygame.math.Vector2(20,0)
+
+# Vecteurs initiaux
+start_vector = center + radius_vector
+line_vector = center + pygame.math.Vector2(WIDTH//2,0)
 
 # ---- MOBS
 # Image du mob
@@ -82,7 +105,7 @@ mob_sprites = []
 # ---- VARIABLES D'ANIMATION
 # Variables de la boucle principale
 angle = 0
-ROTATION_SPEED = 0.5
+ROTATION_SPEED = -0.5
 rotation_speed = ROTATION_SPEED  # Vitesse de rotation (en degrés par image)
 clock = pygame.time.Clock()
 
@@ -121,10 +144,21 @@ while True:
     rotated_turret = pygame.transform.rotate(resized_turret, angle)
     rotated_turret_rect = rotated_turret.get_rect(center=turret_rect.center)
 
-    from_point = rotated_turret_rect.midtop
-    target = (0,0)
-    pygame.draw.line(screen, (255,255,255), from_point, target, 2)
+    # ---- STATIC LASER
+    from_point = (rotated_turret_rect.center[0]-50, rotated_turret_rect.center[1]+20)
+    target = (from_point[0], from_point[1]-(WIDTH*2))
+    pygame.draw.line(screen, (255,0,0), from_point, target, 2)
 
+    # ---- ROTATING LASER
+    # Mise à jour des vecteurs en fonction de la rotation
+    #start_vector = center + radius_vector.rotate(angle)
+    start_vector = pygame.math.Vector2((rotated_turret_rect.center[0], rotated_turret_rect.center[1])) + radius_vector.rotate(angle)
+    line_vector = center + pygame.math.Vector2(WIDTH*2, 0).rotate(-angle)
+
+    # Dessiner ligne
+    pygame.draw.line(screen, (255,0,0), start_vector, line_vector, 2)
+
+    # ---- MISE A JOUR
     # Affichage de la rotation
     screen.blit(rotated_turret, rotated_turret_rect)
 
@@ -134,13 +168,11 @@ while True:
     # Modifier l'angle pour simuler la rotation continue
     angle += rotation_speed
     #print(int(angle%360))
-    """ if int(angle%360) == 180 or int(angle%360) == 270:
-      print(int(angle%360)) """
 
-    """ if 180 <= int(angle % 360) <= 270:
+    if 180 <= int(angle % 360) <= 270:
       rotation_speed = ROTATION_SPEED-0.2
     else:
-      rotation_speed = ROTATION_SPEED """
+      rotation_speed = ROTATION_SPEED
 
     # Limiter la vitesse de la boucle
     clock.tick(60)
