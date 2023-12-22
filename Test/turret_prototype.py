@@ -2,6 +2,21 @@ import sys
 import numpy as np
 import pygame
 
+def midpoint(point1: tuple, 
+             point2: tuple) -> pygame.math.Vector2:
+    """Returns the central point between two coordinates
+
+    Args:
+        point1 : Coordinates of the 1st point
+        point2 : Coordinates of the 2nd point
+
+    Returns:
+        tuple: Coordinates of the center between point1 and point2
+    """    
+    x_mid = (point1[0] + point2[0]) / 2
+    y_mid = (point1[1] + point2[1]) / 2
+    return pygame.math.Vector2(x_mid, y_mid)
+
 def matrix_rotation(rect: pygame.rect.Rect,
                     angle: float) -> np.ndarray:
     """Rotate the vertices coordinates of a rect at a given angle
@@ -111,6 +126,15 @@ while True:
     circle_topright = pygame.draw.circle(screen, circle_color, top_right, circle_radius)
     circle_bottomleft = pygame.draw.circle(screen, circle_color, bottom_left, circle_radius)
     circle_bottomright = pygame.draw.circle(screen, circle_color, bottom_right, circle_radius)
+    
+    # Side circle
+    #bias = pygame.math.Vector2(10)
+    center_point = midpoint(top_right, bottom_right)
+    circle_center = pygame.draw.circle(screen, (0,20,0), center_point, circle_radius+2)
+
+    # Laser
+    rot = pygame.math.Vector2(WIDTH+10, 0).rotate(-angle)
+    pygame.draw.line(screen, (255,0,0), center_point, center_point+rot, 2)
 
     # Display update
     pygame.display.flip()
