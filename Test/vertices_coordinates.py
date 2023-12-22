@@ -27,12 +27,12 @@ rotation_speed = 0.5
 # Circles radius
 circle_radius = 5
 
-# Create a surface from initial rect
-# Add some padding so we can also draw the circles there
+# Création d'une surface à parir du rect initial
+# Ajout d'un léger remplissage pour dessiner les cercles (inflate)
 padded_rect = initial_rect.inflate((2*circle_radius, 2*circle_radius))
 surface = pygame.Surface((padded_rect.width, padded_rect.height), pygame.SRCALPHA)
 
-# Use rectangles with coords relative to the surface:
+# Rectangles avec des coordonnées relatives à la surface :
 relative_rect = pygame.Rect(0, 0, initial_rect.width, initial_rect.height)
 
 # ...and translate this one to make room for the circles
@@ -47,6 +47,7 @@ top_left = moved_rect.topleft
 top_right = moved_rect.topright
 bottom_left = moved_rect.bottomleft
 bottom_right = moved_rect.bottomright
+
 circle_topleft = pygame.draw.circle(surface, circle_color, top_left, circle_radius)
 circle_topright = pygame.draw.circle(surface, circle_color, top_right, circle_radius)
 circle_bottomleft = pygame.draw.circle(surface, circle_color, bottom_left, circle_radius)
