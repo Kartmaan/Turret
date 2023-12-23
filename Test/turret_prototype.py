@@ -3,18 +3,22 @@ import numpy as np
 import pygame
 
 def midpoint(point1: tuple, 
-             point2: tuple) -> pygame.math.Vector2:
-    """Returns the central point between two coordinates
+             point2: tuple,
+             offset: float = 0.0) -> pygame.math.Vector2:
+    """Returns the central point between two coordinates or a 
+    point offset from this center
 
     Args:
         point1 : Coordinates of the 1st point
         point2 : Coordinates of the 2nd point
+        offset : Offset from center (-/+)
 
     Returns:
-        tuple: Coordinates of the center between point1 and point2
+        tuple: The coordinates of the desired point
     """    
-    x_mid = (point1[0] + point2[0]) / 2
-    y_mid = (point1[1] + point2[1]) / 2
+    x_mid = (point1[0] + point2[0]) / 2 + offset * (point2[0] - point1[0]) / np.linalg.norm([point2[0] - point1[0], point2[1] - point1[1]])
+    y_mid = (point1[1] + point2[1]) / 2 + offset * (point2[1] - point1[1]) / np.linalg.norm([point2[0] - point1[0], point2[1] - point1[1]])
+    
     return pygame.math.Vector2(x_mid, y_mid)
 
 def matrix_rotation(rect: pygame.rect.Rect,
@@ -129,7 +133,7 @@ while True:
     
     # Side circle
     #bias = pygame.math.Vector2(10)
-    center_point = midpoint(top_right, bottom_right)
+    center_point = midpoint(top_right, bottom_right, offset=-20)
     circle_center = pygame.draw.circle(screen, (0,20,0), center_point, circle_radius+2)
 
     # Laser
