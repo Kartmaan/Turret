@@ -65,7 +65,7 @@ base_rect = resized_base.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 # ---- TOURELLE
 # Image de la tourelle
-turret_image = pygame.image.load("assets/images/sprites/turret.png")
+turret_image = pygame.image.load("assets/images/sprites/turret_deploy.png")
 turret_rect = turret_image.get_rect()
 
 # Redimension de la tourelle

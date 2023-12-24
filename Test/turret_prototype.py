@@ -15,11 +15,11 @@ def midpoint(point1: tuple,
 
     Returns:
         tuple: The coordinates of the desired point
-    """    
-    x_mid = (point1[0] + point2[0]) / 2 + offset * (point2[0] - point1[0]) / np.linalg.norm([point2[0] - point1[0], point2[1] - point1[1]])
-    y_mid = (point1[1] + point2[1]) / 2 + offset * (point2[1] - point1[1]) / np.linalg.norm([point2[0] - point1[0], point2[1] - point1[1]])
+    """
+    x = (point1[0] + point2[0]) / 2 + offset * (point2[0] - point1[0]) / np.linalg.norm([point2[0] - point1[0], point2[1] - point1[1]])
+    y = (point1[1] + point2[1]) / 2 + offset * (point2[1] - point1[1]) / np.linalg.norm([point2[0] - point1[0], point2[1] - point1[1]])
     
-    return pygame.math.Vector2(x_mid, y_mid)
+    return pygame.math.Vector2(x, y)
 
 def matrix_rotation(rect: pygame.rect.Rect,
                     angle: float) -> np.ndarray:
