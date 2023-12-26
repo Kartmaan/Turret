@@ -49,3 +49,17 @@ def mobs_gen(coef:float = 0.10) -> pygame.surface.Surface:
     new_size = (rect.width*coef, rect.height*coef)
     resized_mod = pygame.transform.smoothscale(mob, new_size)
     return resized_mod
+
+def debug_mode(screen:pygame.surface.Surface, refs:dict):
+    """Shows on-screen information about animation states.
+    Like highlighting reference points
+
+    Args:
+        screen: The main surface on which to draw
+        refs: _description_
+    """
+    screen_width = screen.get_width()
+    screen_height = screen.get_height()
+    
+    for key, pos in refs.items():
+        pygame.draw.circle(screen, (255,0,0), (pos[0], pos[1]), 5)

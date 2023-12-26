@@ -38,7 +38,7 @@ while True:
     pygame.draw.line(screen, line_color, start_vector, line_vector, 2)
 
     # Mettre à jour le vecteur en fonction de la rotation
-    line_vector = start_vector + pygame.math.Vector2(300, 0).rotate(angle)
+    line_vector = start_vector + pygame.math.Vector2(400, 0).rotate(angle)
 
     # Mettre à jour l'affichage
     pygame.display.flip()

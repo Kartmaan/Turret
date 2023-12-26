@@ -1,6 +1,7 @@
 import sys
 from functions.display import pygame, turret_sprites, mobs_gen
-from functions.geometry import midpoint, get_distance, matrix_rotation
+from functions.display import debug_mode
+from functions.geometry import get_distance, ref_points
 
 # Initialisation de Pygame
 pygame.init()
@@ -40,6 +41,7 @@ mob_sprites = []
 angle = 0
 ROTATION_SPEED = 0.5 # Initial speed
 rotation_speed = ROTATION_SPEED  # Vitesse de rotation (en degrés par image)
+debug = True
 clock = pygame.time.Clock()
 
 # Boucle principale
@@ -79,39 +81,11 @@ while True:
     rotated_turret = pygame.transform.rotate(turret_image, angle)
     rotated_turret_rect = rotated_turret.get_rect(center=turret_rect.center)
 
-    # ---- SHOW REFERENTIAL POINTS
-    rotated_points = matrix_rotation(turret_rect, angle)
+    # ---- REFERENTIAL POINTS
+    refs = ref_points(turret_rect, angle)
     
-    # Get vertex coordinates
-    top_left = tuple(rotated_points[0])
-    top_right = tuple(rotated_points[1])
-    bottom_right = tuple(rotated_points[2])
-    bottom_left = tuple(rotated_points[3])
-    
-    # Vertices
-    circle_color = (255,0,0)
-    circle_radius = 5
-    circle_topleft = pygame.draw.circle(screen, circle_color, top_left, circle_radius)
-    circle_topright = pygame.draw.circle(screen, circle_color, top_right, circle_radius)
-    circle_bottomleft = pygame.draw.circle(screen, circle_color, bottom_left, circle_radius)
-    circle_bottomright = pygame.draw.circle(screen, circle_color, bottom_right, circle_radius)
-    
-    # Cannon
-    circle_color = (0,0,255)
-    cannon_point = midpoint(top_left, top_right)
-    circle_cannon = pygame.draw.circle(screen, circle_color, cannon_point, circle_radius)
-    
-    # Laser referential
-    circle_color = (255,0,255)
-    top_ref = midpoint(top_left, top_right, offset=-44)
-    bottom_ref = midpoint(bottom_left, bottom_right, offset=-44)
-    laser_ref = midpoint(top_ref, bottom_ref, offset=15)
-    circle_top_ref = pygame.draw.circle(screen, circle_color, top_ref, circle_radius)
-    circle_bot_ref = pygame.draw.circle(screen, circle_color, bottom_ref, circle_radius)
-    circle_laser_ref = pygame.draw.circle(screen, circle_color, laser_ref, 10)
-
-
-    
+    if debug:
+      debug_mode(screen, refs)
     
     # ---- MISE A JOUR
     # Affichage de la rotation

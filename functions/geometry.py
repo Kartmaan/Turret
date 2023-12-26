@@ -75,3 +75,57 @@ def matrix_rotation(rect: pygame.rect.Rect,
     rotated_points = np.dot(rect_vertices - center, rotation_matrix) + center
     
     return rotated_points
+
+def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
+    """Sets turret reference points at each rotation angle.
+    These points are used to precisely place different elements 
+    such as the laser or projectiles
+
+    Args:
+        rect: A Rect object
+        angle: Angle in degrees
+
+    Returns:
+        dict: A dictionary containing the coordinates 
+        of all reference points
+    """    
+    rotated_points = matrix_rotation(rect, angle)
+    
+    # Verices
+    top_left = tuple(rotated_points[0])
+    top_right = tuple(rotated_points[1])
+    bottom_right = tuple(rotated_points[2])
+    bottom_left = tuple(rotated_points[3])
+    
+    # Cannon
+    cannon_point = midpoint(top_left, top_right)
+    
+    # Get distances
+    small_side = get_distance(top_left, cannon_point)
+    long_side = get_distance(top_right, midpoint(top_right, bottom_right))
+    
+    # Laser referentials
+    top_laser = midpoint(top_left, top_right, offset=-44)
+    bottom_laser = midpoint(bottom_left, bottom_right, offset=-44)
+    laser_start = midpoint(top_laser, bottom_laser, offset=15)
+    
+    # Sides
+    steam_left = midpoint(top_left, bottom_left, offset=10)
+    steam_right = midpoint(top_right, bottom_right, offset=10)
+    
+    refs = {
+        "top_left" : top_left,
+        "top_right" : top_right,
+        "bottom_right" : bottom_right,
+        "bottom_left" : bottom_left,
+        "left_side" : steam_left,
+        "right_side" : steam_right,
+        "cannon" : cannon_point,
+        "top_laser" : top_laser,
+        "bottom_laser" : bottom_laser,
+        "laser_start" : laser_start
+    }
+    
+    return refs
+    
+    
