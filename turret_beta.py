@@ -1,44 +1,6 @@
 import sys
-import math
-import pygame
-
-def get_distance(p1: tuple, p2: tuple) -> float:
-  """Returns the distance between two coordinates
-
-  Args:
-  p1 : First coordinates
-  p2 : Second coordinates
-
-  Returns:
-  The distance between the two coordinates 
-  """
-  distance = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
-  return distance
-
-def get_angle(p1:tuple, p2:tuple) -> float:
-  angle_rad = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
-  angle_deg = math.degrees(angle_rad)
-  return angle_deg
-
-def get_angle_2(p1, p2, p3):
-  # Vecteur des deux côtés
-  vector1 = (p1[0] - p2[0], p1[1] - p2[1])
-  vector2 = (p3[0] - p2[0], p3[1] - p2[1])
-
-  # Calcul du produit scalaire
-  dot_product = vector1[0] * vector2[0] + vector1[1] * vector2[1]
-
-  # Calcul des longueurs des vecteurs
-  magn1 = math.sqrt(vector1[0]**2 + vector1[1]**2)
-  magn2 = math.sqrt(vector2[0]**2 + vector2[1]**2)
-
-  # Angle en radian
-  angle_rad = math.acos(dot_product / (magn1 * magn2))
-
-  # Conversion degré
-  angle_deg = math.degrees(angle_rad)
-
-  return angle_deg
+from functions.display import pygame, turret_sprites, mobs_gen
+from functions.geometry import midpoint, get_distance, matrix_rotation
 
 # Initialisation de Pygame
 pygame.init()
@@ -57,57 +19,26 @@ base_rect = base_image.get_rect()
 coef = 2 #2
 new_base_size = (base_rect.width//coef, base_rect.height//coef)
 resized_base = pygame.transform.smoothscale(base_image, new_base_size)
-print(resized_base)
+#print(resized_base)
 
 # Positionnement de la base
 base_rect.center = (WIDTH//2, HEIGHT//2)
 base_rect = resized_base.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 # ---- TOURELLE
-# Image de la tourelle
-turret_image = pygame.image.load("assets/images/sprites/turret_deploy.png")
+turret_image = turret_sprites()["turret_on"]
 turret_rect = turret_image.get_rect()
-#print(turret_rect)
-
-# Redimension de la tourelle
-coef = 1.5 #1.5
-new_turret_size = (turret_rect.width//coef, turret_rect.height//coef)
-resized_turret = pygame.transform.smoothscale(turret_image, new_turret_size)
-resized_turret_rect = resized_turret.get_rect()
-print(resized_turret_rect)
 
 # Positionnement de la tourelle
 turret_rect.center = (WIDTH//2, HEIGHT//2)
 
-# ---- ROTATING LASER
-# Position initiale
-rect = resized_turret.get_rect()
-center = (WIDTH//2, HEIGHT//2)
-
-# Rayon de rotation de center
-radius_vector = pygame.math.Vector2(20,0)
-
-# Vecteurs initiaux
-start_vector = center + radius_vector
-line_vector = center + pygame.math.Vector2(WIDTH//2,0)
-
 # ---- MOBS
-# Image du mob
-mob_image = pygame.image.load("assets/images/sprites/mob.png")
-mob_rect = mob_image.get_rect()
-
-# Redimension du mob
-coef = 10
-new_mob_size = (mob_rect.width//coef, mob_rect.height//coef)
-resized_mob = pygame.transform.smoothscale(mob_image, new_mob_size)
-
-# Emplacement des mobs
 mob_sprites = []
 
 # ---- VARIABLES D'ANIMATION
 # Variables de la boucle principale
 angle = 0
-ROTATION_SPEED = -0.5
+ROTATION_SPEED = 0.5 # Initial speed
 rotation_speed = ROTATION_SPEED  # Vitesse de rotation (en degrés par image)
 clock = pygame.time.Clock()
 
@@ -121,11 +52,13 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
           max_mobs = 5
           if len(mob_sprites) <= max_mobs-1:
+            mob = mobs_gen()
             mouse_x, mouse_y = pygame.mouse.get_pos()
             dist = get_distance((WIDTH//2, HEIGHT//2), (mouse_x, mouse_y))
-
-            new_mob = {'image':resized_mob, 
-            'rect': resized_mob.get_rect(center=(mouse_x, mouse_y)),
+            #print(dist)
+            
+            new_mob = {'image':mob, 
+            'rect': mob.get_rect(center=(mouse_x, mouse_y)),
             'pos' : (mouse_x, mouse_y),
             'dist' : dist}
 
@@ -143,7 +76,7 @@ while True:
     screen.blit(resized_base, base_rect)
 
     # Rotation de la tourelle
-    rotated_turret = pygame.transform.rotate(resized_turret, angle)
+    rotated_turret = pygame.transform.rotate(turret_image, angle)
     rotated_turret_rect = rotated_turret.get_rect(center=turret_rect.center)
 
     # ---- MISE A JOUR
@@ -159,8 +92,10 @@ while True:
 
     if 180 <= int(angle % 360) <= 270:
       rotation_speed = ROTATION_SPEED-0.2
+      turret_image = turret_sprites()["turret_deploy"]
     else:
       rotation_speed = ROTATION_SPEED
+      turret_image = turret_sprites()["turret_on"]
 
     # Limiter la vitesse de la boucle
     clock.tick(60)
