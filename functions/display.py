@@ -48,6 +48,7 @@ def mobs_gen(coef:float = 0.10) -> pygame.surface.Surface:
     rect = mob.get_rect()
     new_size = (rect.width*coef, rect.height*coef)
     resized_mod = pygame.transform.smoothscale(mob, new_size)
+    
     return resized_mod
 
 def laser(screen:pygame.surface.Surface, origin:tuple,
@@ -71,7 +72,8 @@ def laser(screen:pygame.surface.Surface, origin:tuple,
     thickness = 4
     length = pygame.math.Vector2(0,-screen_width).rotate(-angle)
     pygame.draw.line(screen, color, origin, origin+length, thickness)
-    return (origin, origin+length)
+    
+    return origin, origin+length
 
 def debug_mode(screen:pygame.surface.Surface, refs:dict):
     """Shows on-screen information about animation states.

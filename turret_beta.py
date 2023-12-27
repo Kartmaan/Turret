@@ -1,7 +1,7 @@
 import sys
 from functions.display import pygame, turret_sprites, mobs_gen
 from functions.display import laser, debug_mode
-from functions.geometry import get_distance, ref_points
+from functions.geometry import get_distance, ref_points, detection
 
 # Initialisation de Pygame
 pygame.init()
@@ -92,6 +92,7 @@ while True:
     screen.blit(rotated_turret, rotated_turret_rect)
     
     laser_segment = laser(screen, refs["laser_start"], angle)
+    detection(laser_segment[0], laser_segment[1], mob_sprites)
     
     # Mettre à jour l'affichage
     pygame.display.flip()

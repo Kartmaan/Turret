@@ -129,4 +129,11 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
     return refs
     
 def detection(origin:tuple, end:tuple, mob_sprites:list):
-    pass
+    for mob in mob_sprites:
+        pos = mob['pos']
+        form1 = np.sqrt((pos[0]-origin[0])**2 + (pos[1]-origin[1])**2)
+        form2 = np.sqrt((pos[0]-end[0])**2 + (pos[1]-end[1])**2)
+        form3 = np.sqrt((end[0]-origin[0])**2 + (end[1]-origin[1])**2)
+        
+        if int(form1+form2) == form3:
+            print("DETECTED!")
