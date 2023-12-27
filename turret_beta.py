@@ -41,7 +41,8 @@ mob_sprites = []
 angle = 0
 ROTATION_SPEED = 0.5 # Initial speed
 rotation_speed = ROTATION_SPEED  # Vitesse de rotation (en degrés par image)
-debug = True
+debug = False
+detected = False
 clock = pygame.time.Clock()
 
 # Boucle principale
@@ -92,7 +93,10 @@ while True:
     screen.blit(rotated_turret, rotated_turret_rect)
     
     laser_segment = laser(screen, refs["laser_start"], angle)
-    detection(laser_segment[0], laser_segment[1], mob_sprites)
+    if detection(laser_segment[0], laser_segment[1], mob_sprites) != None:
+      rotation_speed=0
+      detected=True
+      turret_image = turret_sprites()["turret_alert"]
     
     # Mettre à jour l'affichage
     pygame.display.flip()
@@ -101,12 +105,13 @@ while True:
     angle += rotation_speed
     #print(int(angle%360))
 
-    if 180 <= int(angle % 360) <= 270:
-      rotation_speed = ROTATION_SPEED-0.2
-      turret_image = turret_sprites()["turret_deploy"]
-    else:
-      rotation_speed = ROTATION_SPEED
-      turret_image = turret_sprites()["turret_on"]
+    if not detected: 
+      if 180 <= int(angle % 360) <= 270:
+        rotation_speed = ROTATION_SPEED-0.2
+        turret_image = turret_sprites()["turret_deploy"]
+      else:
+        rotation_speed = ROTATION_SPEED
+        turret_image = turret_sprites()["turret_on"]
 
     # Limiter la vitesse de la boucle
     clock.tick(60)

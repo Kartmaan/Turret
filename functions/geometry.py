@@ -136,4 +136,5 @@ def detection(origin:tuple, end:tuple, mob_sprites:list):
         form3 = np.sqrt((end[0]-origin[0])**2 + (end[1]-origin[1])**2)
         
         if int(form1+form2) == form3:
-            print("DETECTED!")
+            #print("DETECTED!")
+            return pos
