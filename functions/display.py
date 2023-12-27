@@ -68,7 +68,7 @@ def laser(screen:pygame.surface.Surface, origin:tuple,
     """    
     screen_width = screen.get_width()
     color=(255,0,0)
-    thickness = 3
+    thickness = 4
     length = pygame.math.Vector2(0,-screen_width).rotate(-angle)
     pygame.draw.line(screen, color, origin, origin+length, thickness)
     return (origin, origin+length)

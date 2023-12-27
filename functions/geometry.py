@@ -105,9 +105,9 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
     long_side = get_distance(top_right, midpoint(top_right, bottom_right))
     
     # Laser referentials
-    top_laser = midpoint(top_left, top_right, offset=-44)
-    bottom_laser = midpoint(bottom_left, bottom_right, offset=-44)
-    laser_start = midpoint(top_laser, bottom_laser, offset=15)
+    top_laser = midpoint(top_left, top_right, offset=-48)
+    bottom_laser = midpoint(bottom_left, bottom_right, offset=-48)
+    laser_start = midpoint(top_laser, bottom_laser, offset=20)
     
     # Sides
     steam_left = midpoint(top_left, bottom_left, offset=10)
@@ -128,4 +128,5 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
     
     return refs
     
-    
+def detection(origin:tuple, end:tuple, mob_sprites:list):
+    pass
