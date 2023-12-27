@@ -21,7 +21,7 @@ def midpoint(point1: tuple,
     return pygame.math.Vector2(x, y)
 
 def get_distance(p1: tuple, p2: tuple) -> float:
-  """Returns the distance between two coordinates
+  """Returns the Euclidean distance between two coordinates
 
   Args:
   p1 : First coordinates
@@ -128,13 +128,31 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
     
     return refs
     
-def detection(origin:tuple, end:tuple, mob_sprites:list):
-    for mob in mob_sprites:
+def detection(origin:tuple, end:tuple, mob_sprites:list) -> tuple:
+    """Detects when a mob's coordinates intersect the laser segment.
+    
+    A-------------M-----B
+    If points AB represent the coordinates of the laser segment 
+    and point M the coordinates of the mob, we can determine 
+    that M is on the segment if the distance AM + MB = AB.
+    The function goes through the coordinates of the mobs in 
+    mob_sprites, checking for each of them if this equality is 
+    respected. If this is the case the function returns 
+    the coordinates of the detected mob
+
+    Args:
+        origin: Coordinates of the laser segment's origin point
+        end: Laser segment end point coordinates
+        mob_sprites: Mobs list
+    Returns:
+        tuple: Coordinates of the detected mob
+    """    
+    for mob in mob_sprites:        
         pos = mob['pos']
-        form1 = np.sqrt((pos[0]-origin[0])**2 + (pos[1]-origin[1])**2)
-        form2 = np.sqrt((pos[0]-end[0])**2 + (pos[1]-end[1])**2)
-        form3 = np.sqrt((end[0]-origin[0])**2 + (end[1]-origin[1])**2)
+        dist1 = get_distance(origin, pos)
+        dist2 = get_distance(pos, end)
+        dist3 = get_distance(origin, end)
         
-        if int(form1+form2) == form3:
+        if int(dist1+dist2) == dist3:
             #print("DETECTED!")
             return pos
