@@ -50,13 +50,37 @@ def mobs_gen(coef:float = 0.10) -> pygame.surface.Surface:
     resized_mod = pygame.transform.smoothscale(mob, new_size)
     return resized_mod
 
+def laser(screen:pygame.surface.Surface, origin:tuple,
+          angle:float) -> tuple:
+    """Draw the detection laser following the rotation 
+    of the turret. The function also returns the 
+    coordinates of the two points of the laser segment 
+    so that they can be exploited for the detection 
+    of an intersection with the coordinates of a mob
+
+    Args:
+        screen: The main surface on which to draw
+        origin: Coordinates of the laser origin
+        angle: Angle of rotation at each loop pass
+
+    Returns:
+        tuple: The coordinates of the laser segment
+    """    
+    screen_width = screen.get_width()
+    color=(255,0,0)
+    thickness = 3
+    length = pygame.math.Vector2(0,-screen_width).rotate(-angle)
+    pygame.draw.line(screen, color, origin, origin+length, thickness)
+    return (origin, origin+length)
+
 def debug_mode(screen:pygame.surface.Surface, refs:dict):
     """Shows on-screen information about animation states.
     Like highlighting reference points
 
     Args:
         screen: The main surface on which to draw
-        refs: _description_
+        refs: Dictionary containing the coordinates of 
+        all reference points
     """
     screen_width = screen.get_width()
     screen_height = screen.get_height()

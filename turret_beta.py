@@ -1,6 +1,6 @@
 import sys
 from functions.display import pygame, turret_sprites, mobs_gen
-from functions.display import debug_mode
+from functions.display import laser, debug_mode
 from functions.geometry import get_distance, ref_points
 
 # Initialisation de Pygame
@@ -57,7 +57,7 @@ while True:
             mob = mobs_gen()
             mouse_x, mouse_y = pygame.mouse.get_pos()
             dist = get_distance((WIDTH//2, HEIGHT//2), (mouse_x, mouse_y))
-            #print(dist)
+            print(dist)
             
             new_mob = {'image':mob, 
             'rect': mob.get_rect(center=(mouse_x, mouse_y)),
@@ -65,7 +65,7 @@ while True:
             'dist' : dist}
 
             mob_sprites.append(new_mob)
-            #print(mob_sprites)
+            print(mob_sprites)
 
     # Effacer l'écran
     screen.fill((25, 25, 25))  # Fond blanc
@@ -83,6 +83,9 @@ while True:
 
     # ---- REFERENTIAL POINTS
     refs = ref_points(turret_rect, angle)
+    
+    laser_segment = laser(screen, refs["laser_start"], angle)
+    #print(get_distance(laser_segment[0], laser_segment[1]))
     
     if debug:
       debug_mode(screen, refs)
