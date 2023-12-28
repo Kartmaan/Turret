@@ -4,7 +4,11 @@ import random
 def turret_sprites(coef:float = 0.67) -> dict:
     """Resize the initial size of turret images by multipling 
     its dimensions by a given value and returns their surface 
-    in a dictionary
+    in a dictionary.
+    
+    The function can be called to directly acquire the desired 
+    resized turret sprite as a Surface object. 
+    Example : turret_sprites()["turret_alert"]
 
     Args:
         coef: Value at which the dimensions will be multiplied

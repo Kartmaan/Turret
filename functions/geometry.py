@@ -76,7 +76,8 @@ def matrix_rotation(rect: pygame.rect.Rect,
     
     return rotated_points
 
-def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
+def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect, 
+               angle:float) -> dict:
     """Sets turret reference points at each rotation angle.
     These points are used to precisely place different elements 
     such as the laser or projectiles
@@ -89,6 +90,8 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
         dict: A dictionary containing the coordinates 
         of all reference points
     """    
+    WIDTH = screen.get_width()
+    HEIGHT = screen.get_height()
     rotated_points = matrix_rotation(rect, angle)
     
     # Verices
@@ -99,6 +102,7 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
     
     # Cannon
     cannon_point = midpoint(top_left, top_right)
+    cannon_target = cannon_point+pygame.math.Vector2(0,-WIDTH).rotate(-angle)
     
     # Get distances
     small_side = get_distance(top_left, cannon_point)
@@ -121,6 +125,7 @@ def ref_points(rect: pygame.rect.Rect, angle:float) -> dict:
         "left_side" : steam_left,
         "right_side" : steam_right,
         "cannon" : cannon_point,
+        "target" : cannon_target,
         "top_laser" : top_laser,
         "bottom_laser" : bottom_laser,
         "laser_start" : laser_start
@@ -138,7 +143,7 @@ def detection(origin:tuple, end:tuple, mob_sprites:list) -> tuple:
     The function goes through the coordinates of the mobs in 
     mob_sprites, checking for each of them if this equality is 
     respected. If this is the case the function returns 
-    the coordinates of the detected mob
+    the coordinates of the detected mob else it returns None
 
     Args:
         origin: Coordinates of the laser segment's origin point
