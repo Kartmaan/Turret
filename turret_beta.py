@@ -4,27 +4,36 @@ from functions.display import laser, debug_mode
 from functions.geometry import get_distance, ref_points, detection
 from functions.animation import rotate_turret
 
-class Rotation():  
+class Rotation():
+  """ The positions and angular velocities of the turret are crucial 
+  values in the program and must be able to be consulted and modified 
+  by most functions. For this we create a Rotation class whose 
+  instantiated object can be distributed to the functions concerned 
+  and manipulated by them so that all parties are aware of the 
+  states of the turret.
+  The object has 3 rotation modes: 'sentinel', 'alert' and 'fire' 
+  with different rotation speeds for each of them
+  """  
   def __init__(self):
     self.angle = 0
     self.rotation_speed_sentinel = 0.5
-    self.rotation_speed_alert = 0.1
+    self.rotation_speed_alert = 0.07
     self.rotation_speed_fire = 0.0
-    self.mode = "sentinel"
+    self.mode = "sentinel" # "alert", "fire"
     
   def rotate(self):
-    if self.mode == "sentinel":
+    if self.mode == "sentinel": # Search for targets
       self.angle += self.rotation_speed_sentinel
-    if self.mode == "alert":
+    if self.mode == "alert": # Target found
       self.angle += self.rotation_speed_alert
-    if self.mode == "fire":
+    if self.mode == "fire": # Ready to fire
       self.angle += self.rotation_speed_fire
     
   def get_angle(self):
+    """ Get current turret angle """
     return int(self.angle%360)
 
 rotation = Rotation()
-#print(type(angle_obj))
 
 # Initialisation de Pygame
 pygame.init()
@@ -33,6 +42,11 @@ pygame.init()
 WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
+
+debug = True
+detected = False
+clock = pygame.time.Clock()
+fps = 60
 
 # ---- BASE
 # Image de la base
@@ -58,16 +72,6 @@ turret_rect.center = (WIDTH//2, HEIGHT//2)
 
 # ---- MOBS
 mob_sprites = []
-
-# ---- VARIABLES D'ANIMATION
-# Variables de la boucle principale
-angle = 0
-ROTATION_SPEED = 0.5 # Initial speed
-rotation_speed = ROTATION_SPEED  # Vitesse de rotation (en degrés par image)
-debug = True
-detected = False
-clock = pygame.time.Clock()
-fps = 60
 
 # Boucle principale
 while True:
@@ -102,12 +106,6 @@ while True:
     # Affichage de la base
     screen.blit(resized_base, base_rect)
 
-    # Rotation de la tourelle
-    #rotated_turret = pygame.transform.rotate(turret_image, angle)
-    #rotated_turret_rect = rotated_turret.get_rect(center=turret_rect.center)
-
-    # ---- REFERENTIAL POINTS
-    #refs = ref_points(turret_rect, angle)
     refs = ref_points(screen, turret_rect, rotation.angle)
     
     if debug:
@@ -116,10 +114,9 @@ while True:
     # ---- MISE A JOUR
     # Affichage de la rotation
     rotate_turret(screen, rotation)
-    #screen.blit(rotated_turret, rotated_turret_rect)
     laser_segment = laser(screen, refs["laser_start"], rotation.angle)
-    
     detect = detection(laser_segment[0], laser_segment[1], mob_sprites)
+    
     if detect != None:
       rotation.mode="alert"
       print(detect)
@@ -129,16 +126,5 @@ while True:
     # Mettre à jour l'affichage
     pygame.display.flip()
 
-    # Modifier l'angle pour simuler la rotation continue
-    #angle += rotation_speed
-    #print(int(angle%360))
-
-    """ if not detected: 
-      if 180 <= int(angle % 360) <= 270:
-        rotation_speed = ROTATION_SPEED-0.2
-        turret_image = turret_sprites()["turret_deploy"]
-      else:
-        rotation_speed = ROTATION_SPEED
-        turret_image = turret_sprites()["turret_on"] """
     # Limiter la vitesse de la boucle
     clock.tick(fps)

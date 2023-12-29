@@ -133,7 +133,8 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
     
     return refs
     
-def detection(origin:tuple, end:tuple, mob_sprites:list) -> tuple:
+def detection(origin:tuple, end:tuple, mob_sprites:list,
+              tolerance:float=0.2) -> tuple:
     """Detects when a mob's coordinates intersect the laser segment.
     
     A-------------M-----B
@@ -143,21 +144,30 @@ def detection(origin:tuple, end:tuple, mob_sprites:list) -> tuple:
     The function goes through the coordinates of the mobs in 
     mob_sprites, checking for each of them if this equality is 
     respected. If this is the case the function returns 
-    the coordinates of the detected mob else it returns None
+    the coordinates of the detected mob else it returns None.
 
     Args:
         origin: Coordinates of the laser segment's origin point
         end: Laser segment end point coordinates
         mob_sprites: Mobs list
+        tolerance: Tolerance value for mob detection
     Returns:
         tuple: Coordinates of the detected mob
-    """    
+    """
+    val_round = 1    
     for mob in mob_sprites:        
         pos = mob['pos']
-        dist1 = get_distance(origin, pos)
-        dist2 = get_distance(pos, end)
-        dist3 = get_distance(origin, end)
+        dist1 = round(get_distance(origin, pos), val_round)
+        dist2 = round(get_distance(pos, end), val_round)
+        dist3 = round(get_distance(origin, end), val_round)
         
-        if int(dist1+dist2) == dist3:
-            #print("DETECTED!")
+        # The sum of the distances dist1 and dist2 can result 
+        # in floating values which, depending on the rotation 
+        # speed or fps, may never precisely reach equality with 
+        # dist 3 (value jump). To remedy this we round the 
+        # distance values to 1 decimal place and add a tolerance 
+        # value so that a mob is detected even if the laser 
+        # is not precisely in its center.
+        diff = dist1 + dist2 - dist3
+        if abs(diff) <= tolerance:
             return pos
