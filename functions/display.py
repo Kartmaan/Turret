@@ -94,4 +94,5 @@ def debug_mode(screen:pygame.surface.Surface, refs:dict):
     for key, pos in refs.items():
         pygame.draw.circle(screen, (255,0,0), (pos[0], pos[1]), 5)
     
+    # Cannon target line
     pygame.draw.line(screen, (255,255,255), refs["cannon"], refs["target"], 2)

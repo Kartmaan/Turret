@@ -43,8 +43,7 @@ WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
-debug = True
-detected = False
+debug = False
 clock = pygame.time.Clock()
 fps = 60
 
@@ -54,8 +53,8 @@ base_image = pygame.image.load("assets/images/sprites/turret_base.png")
 base_rect = base_image.get_rect()
 
 # Redimension de la base
-coef = 2 #2
-new_base_size = (base_rect.width//coef, base_rect.height//coef)
+coef = 0.5 #2
+new_base_size = (base_rect.width*coef, base_rect.height*coef)
 resized_base = pygame.transform.smoothscale(base_image, new_base_size)
 #print(resized_base)
 
@@ -90,7 +89,7 @@ while True:
             
             new_mob = {'image':mob, 
             'rect': mob.get_rect(center=(mouse_x, mouse_y)),
-            'pos' : (mouse_x, mouse_y),
+            'pos' : pygame.math.Vector2(mouse_x, mouse_y),
             'dist' : dist}
 
             mob_sprites.append(new_mob)
@@ -117,11 +116,14 @@ while True:
     laser_segment = laser(screen, refs["laser_start"], rotation.angle)
     detect = detection(laser_segment[0], laser_segment[1], mob_sprites)
     
+    if detect == None:
+      rotation.mode="sentinel"
     if detect != None:
       rotation.mode="alert"
-      print(detect)
-    else:
-      rotation.mode="sentinel"
+      #print(detect)
+    if detection(refs["cannon"], refs["target"], mob_sprites) != None:
+      #print("CANON")
+      rotation.mode="fire"
     
     # Mettre à jour l'affichage
     pygame.display.flip()
