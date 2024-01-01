@@ -1,12 +1,22 @@
-import pygame
+import dis
 import numpy as np
+import pygame
 
-def get_distance(p1: tuple, p2: tuple) -> float:
-  distance = np.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
-  return distance
+def matrix_rotation(rect: pygame.rect.Rect,angle: float) -> np.ndarray:
+    
+    center = np.array(rect.center)
+    rect_vertices = np.array([
+        rect.topleft, rect.topright, rect.bottomright, 
+        rect.bottomleft])
+    
+    angle_rad = np.radians(angle)
+    rotation_matrix = np.array([
+        [np.cos(angle_rad), -np.sin(angle_rad)],
+        [np.sin(angle_rad), np.cos(angle_rad)]
+    ]) 
+    rotated_points = np.dot(rect_vertices - center, rotation_matrix) + center
+    
+    return rotated_points
 
-p1 = pygame.math.Vector2(1,3)
-p2 = pygame.math.Vector2(5,6)
-
-print(p1.distance_to(p2))
-print(get_distance(p1, p2))
+res = dis.dis(matrix_rotation)
+print(res)

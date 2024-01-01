@@ -1,8 +1,8 @@
 import sys
 from functions.display import pygame, turret_sprites, mobs_gen
-from functions.display import laser, debug_mode
+from functions.display import background, laser, debug_mode
 from functions.geometry import get_distance, ref_points, detection
-from functions.animation import rotate_turret
+from functions.animation import rotate_turret, make_it_rain
 
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
@@ -16,8 +16,8 @@ class Rotation():
   """  
   def __init__(self):
     self.angle = 0
-    self.rotation_speed_sentinel = 0.5
-    self.rotation_speed_alert = 0.07
+    self.rotation_speed_sentinel = 0.6
+    self.rotation_speed_alert = 0.1
     self.rotation_speed_fire = 0.0
     self.mode = "sentinel" # "alert", "fire"
     
@@ -44,6 +44,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
 debug = False
+rain = True
 clock = pygame.time.Clock()
 fps = 60
 
@@ -61,10 +62,12 @@ resized_base = pygame.transform.smoothscale(base_image, new_base_size)
 # Positionnement de la base
 base_rect.center = (WIDTH//2, HEIGHT//2)
 base_rect = resized_base.get_rect(center=(WIDTH//2, HEIGHT//2))
+#print(base_rect)
 
 # ---- TOURELLE
 turret_image = turret_sprites()["turret_on"]
 turret_rect = turret_image.get_rect()
+#print(turret_rect)
 
 # Positionnement de la tourelle
 turret_rect.center = (WIDTH//2, HEIGHT//2)
@@ -94,10 +97,12 @@ while True:
 
             mob_sprites.append(new_mob)
             #print(mob_sprites)
-
+    
     # Effacer l'écran
     screen.fill((25, 25, 25))  # Fond blanc
-
+    
+    background(screen)
+    
     # Affichage continu des mobs
     for mob in mob_sprites:
       screen.blit(mob['image'], mob['rect'])
@@ -115,6 +120,9 @@ while True:
     rotate_turret(screen, rotation)
     laser_segment = laser(screen, refs["laser_start"], rotation.angle)
     detect = detection(laser_segment[0], laser_segment[1], mob_sprites)
+    
+    if rain:
+      make_it_rain(screen)
     
     if detect == None:
       rotation.mode="sentinel"

@@ -79,6 +79,13 @@ def laser(screen:pygame.surface.Surface, origin:tuple,
     
     return origin, origin+length
 
+def background(screen:pygame.surface.Surface):
+    WIDTH = screen.get_width()
+    HEIGHT = screen.get_height()
+    background_img = pygame.image.load("assets/images/background.png")
+    background_img = background_img.convert()
+    screen.blit(background_img, (0,0))
+
 def debug_mode(screen:pygame.surface.Surface, refs:dict):
     """Shows on-screen information about animation states.
     Like highlighting reference points
