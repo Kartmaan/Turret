@@ -94,41 +94,55 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
     HEIGHT = screen.get_height()
     rotated_points = matrix_rotation(rect, angle)
     
-    # Verices
+    # Rect vertices
     top_left = tuple(rotated_points[0])
     top_right = tuple(rotated_points[1])
     bottom_right = tuple(rotated_points[2])
     bottom_left = tuple(rotated_points[3])
+    left_side = midpoint(top_left, bottom_left)
+    right_side = midpoint(top_right, bottom_right)
+    
+    # Get distances
+    small_side = get_distance(top_left, top_right)
+    long_side = get_distance(top_right, bottom_right)
+    #print(small_side, long_side)
     
     # Cannon
     cannon_point = midpoint(top_left, top_right)
     cannon_target = cannon_point+pygame.math.Vector2(0,-WIDTH).rotate(-angle)
-    
-    # Get distances
-    small_side = get_distance(top_left, cannon_point)
-    long_side = get_distance(top_right, midpoint(top_right, bottom_right))
     
     # Laser referentials
     top_laser = midpoint(top_left, top_right, offset=-48)
     bottom_laser = midpoint(bottom_left, bottom_right, offset=-48)
     laser_start = midpoint(top_laser, bottom_laser, offset=20)
     
-    # Sides
-    steam_left = midpoint(top_left, bottom_left, offset=10)
-    steam_right = midpoint(top_right, bottom_right, offset=10)
+    # Steam referentials
+    steam_right_alignment = midpoint(top_right, bottom_right, offset=10)
+    steam_left_alignment = midpoint(top_left, bottom_left, offset=10)
+    steam_origin = midpoint(steam_left_alignment, steam_right_alignment, offset=40)
+    steam_end = steam_origin+pygame.math.Vector2(100,0).rotate(-angle)
     
     refs = {
+        # Turret rect referentials
         "top_left" : top_left,
         "top_right" : top_right,
         "bottom_right" : bottom_right,
         "bottom_left" : bottom_left,
-        "left_side" : steam_left,
-        "right_side" : steam_right,
+        "left_side" : left_side,
+        "right_side" : right_side,
+        
+        # Cannon
         "cannon" : cannon_point,
         "target" : cannon_target,
+        
+        # Laser
         "top_laser" : top_laser,
         "bottom_laser" : bottom_laser,
-        "laser_start" : laser_start
+        "laser_start" : laser_start,
+        
+        # Steam
+        "steam_origin" : steam_origin,
+        "steam_end" : steam_end
     }
     
     return refs

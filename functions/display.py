@@ -86,7 +86,8 @@ def background(screen:pygame.surface.Surface):
     background_img = background_img.convert()
     screen.blit(background_img, (0,0))
 
-def debug_mode(screen:pygame.surface.Surface, refs:dict):
+def debug_mode(screen:pygame.surface.Surface, refs:dict, 
+               rotationObject):
     """Shows on-screen information about animation states.
     Like highlighting reference points
 

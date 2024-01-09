@@ -42,7 +42,7 @@ def matrix_rotation(rect: pygame.rect.Rect,
     # of the points after 1 angle of rotation. 
     # It is this matrix that we return.
     rotated_points = np.dot(rect_vertices - center, rotation_matrix) + center
-    
+    #print(rotated_points)
     return rotated_points
 
 # Initializing Pygame

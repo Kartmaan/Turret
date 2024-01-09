@@ -43,8 +43,8 @@ WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
-debug = False
-rain = True
+debug = True
+rain = False
 clock = pygame.time.Clock()
 fps = 60
 
@@ -112,25 +112,26 @@ while True:
 
     refs = ref_points(screen, turret_rect, rotation.angle)
     
-    if debug:
-      debug_mode(screen, refs)
-    
     # ---- MISE A JOUR
     # Affichage de la rotation
-    rotate_turret(screen, rotation)
+    rotate_turret(screen, rotation, refs)
     laser_segment = laser(screen, refs["laser_start"], rotation.angle)
-    detect = detection(laser_segment[0], laser_segment[1], mob_sprites)
+    laser_detect = detection(laser_segment[0], laser_segment[1], mob_sprites)
     
+    if debug:
+      debug_mode(screen, refs, rotation)
+      
     if rain:
       make_it_rain(screen)
     
-    if detect == None:
+    if laser_detect == None:
       rotation.mode="sentinel"
-    if detect != None:
+      
+    if laser_detect != None:
       rotation.mode="alert"
-      #print(detect)
-    if detection(refs["cannon"], refs["target"], mob_sprites) != None:
-      #print("CANON")
+      
+    cannon_detect = detection(refs["cannon"], refs["target"], mob_sprites)
+    if cannon_detect != None:
       rotation.mode="fire"
     
     # Mettre à jour l'affichage
