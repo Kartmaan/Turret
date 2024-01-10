@@ -1,37 +1,8 @@
 import sys
-from functions.display import pygame, turret_sprites, mobs_gen
-from functions.display import background, laser, debug_mode
-from functions.geometry import get_distance, ref_points, detection
-from functions.animation import rotate_turret, make_it_rain
-
-class Rotation():
-  """ The positions and angular velocities of the turret are crucial 
-  values in the program and must be able to be consulted and modified 
-  by most functions. For this we create a Rotation class whose 
-  instantiated object can be distributed to the functions concerned 
-  and manipulated by them so that all parties are aware of the 
-  states of the turret.
-  The object has 3 rotation modes: 'sentinel', 'alert' and 'fire' 
-  with different rotation speeds for each of them
-  """  
-  def __init__(self):
-    self.angle = 0
-    self.rotation_speed_sentinel = 0.6
-    self.rotation_speed_alert = 0.1
-    self.rotation_speed_fire = 0.0
-    self.mode = "sentinel" # "alert", "fire"
-    
-  def rotate(self):
-    if self.mode == "sentinel": # Search for targets
-      self.angle += self.rotation_speed_sentinel
-    if self.mode == "alert": # Target found
-      self.angle += self.rotation_speed_alert
-    if self.mode == "fire": # Ready to fire
-      self.angle += self.rotation_speed_fire
-    
-  def get_angle(self):
-    """ Get current turret angle """
-    return int(self.angle%360)
+from functions.display import pygame, Mobs, turret_sprites, laser
+from functions.display import background, debug_mode
+from functions.geometry import ref_points, detection
+from functions.animation import Rotation, rotate_turret, make_it_rain
 
 rotation = Rotation()
 
@@ -73,7 +44,7 @@ turret_rect = turret_image.get_rect()
 turret_rect.center = (WIDTH//2, HEIGHT//2)
 
 # ---- MOBS
-mob_sprites = []
+mobs = Mobs()
 
 # Boucle principale
 while True:
@@ -83,32 +54,21 @@ while True:
             sys.exit()
         
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-          max_mobs = 8
-          if len(mob_sprites) <= max_mobs-1:
-            mob = mobs_gen()
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            dist = get_distance((WIDTH//2, HEIGHT//2), (mouse_x, mouse_y))
-            #print(dist)
-            
-            new_mob = {'image':mob, 
-            'rect': mob.get_rect(center=(mouse_x, mouse_y)),
-            'pos' : pygame.math.Vector2(mouse_x, mouse_y),
-            'dist' : dist}
-
-            mob_sprites.append(new_mob)
-            #print(mob_sprites)
+          mobs.add_mob(screen, pygame.mouse.get_pos())
     
     # Effacer l'écran
-    screen.fill((25, 25, 25))  # Fond blanc
+    screen.fill((25, 25, 25))
     
-    background(screen)
+    if not debug:
+      background(screen)
     
     # Affichage continu des mobs
-    for mob in mob_sprites:
+    for mob in mobs.living_mobs:
       screen.blit(mob['image'], mob['rect'])
 
     # Affichage de la base
-    screen.blit(resized_base, base_rect)
+    if not debug:
+      screen.blit(resized_base, base_rect)
 
     refs = ref_points(screen, turret_rect, rotation.angle)
     
@@ -116,10 +76,10 @@ while True:
     # Affichage de la rotation
     rotate_turret(screen, rotation, refs)
     laser_segment = laser(screen, refs["laser_start"], rotation.angle)
-    laser_detect = detection(laser_segment[0], laser_segment[1], mob_sprites)
+    laser_detect = detection(laser_segment[0], laser_segment[1], mobs.living_mobs)
     
     if debug:
-      debug_mode(screen, refs, rotation)
+      debug_mode(screen, refs, rotation, mobs)
       
     if rain:
       make_it_rain(screen)
@@ -130,7 +90,7 @@ while True:
     if laser_detect != None:
       rotation.mode="alert"
       
-    cannon_detect = detection(refs["cannon"], refs["target"], mob_sprites)
+    cannon_detect = detection(refs["cannon"], refs["target"], mobs.living_mobs)
     if cannon_detect != None:
       rotation.mode="fire"
     
