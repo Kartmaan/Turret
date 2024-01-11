@@ -75,7 +75,8 @@ class Mobs():
     
         return mob
     
-    def add_mob(self, screen:pygame.surface.Surface, pos:tuple):
+    def add_mob(self, screen:pygame.surface.Surface, pos:tuple,
+                turret_base:pygame.surface.Surface):
         """Adds a mob to the list of mobs to display 
         (self.living_mobs). 
 
@@ -103,39 +104,36 @@ class Mobs():
             
             self.living_mobs.append(new_mob)
     
-    def kill_mob(self, pos:tuple):
-        pass
+    def kill_mob(self):
+        if len(self.living_mobs) >= 1:
+            del self.living_mobs[-1]
 
-def turret_sprites(coef:float = 0.67) -> dict:
-    """Resize the initial size of turret images by multipling 
-    its dimensions by a given value and returns their surface 
-    in a dictionary.
-    
-    The function can be called to directly acquire the desired 
-    resized turret sprite as a Surface object. 
-    Example : turret_sprites()["turret_alert"]
-
-    Args:
-        coef: Value at which the dimensions will be multiplied
-
-    Returns:
-        dict: A dictionary containing the Surface of each turret
+class TurretSprites():
+    """Enables you to recover the surface of the turret sprite 
+    which is suitable according to the different rotation modes: 
+    sentinel, alert, fire.
     """    
-    images = {
-        "turret_on" : pygame.image.load("assets/images/sprites/turret_on.png"),
+    def __init__(self):
+        self.turret_sprites = {
+        "turret_sentinel" : pygame.image.load("assets/images/sprites/turret_sentinel.png"),
         "turret_alert" : pygame.image.load("assets/images/sprites/turret_alert.png"),
-        "turret_deploy" : pygame.image.load("assets/images/sprites/turret_deploy.png")
-    }
-    
-    resized_sprites = {}
-    
-    for key, img in images.items():
-        rect = img.get_rect()
-        new_size = (rect.width*coef, rect.height*coef)
-        resized = pygame.transform.smoothscale(img, new_size)
-        resized_sprites[key] = resized
-    
-    return resized_sprites
+        "turret_fire" : pygame.image.load("assets/images/sprites/turret_fire.png")}
+        
+        self.resize()
+        
+        self.turret_sentinel = self.turret_sprites["turret_sentinel"]
+        self.turret_alert = self.turret_sprites["turret_alert"]
+        self.turret_fire = self.turret_sprites["turret_fire"]
+        
+    def resize(self, coef:float = 0.67):
+        """Resize sprites according to a factor value (coef)
+
+        Args:
+            coef : Reduction size factor
+        """        
+        for key, img in self.turret_sprites.copy().items():
+            resized_sprite = pygame.transform.smoothscale_by(img, coef)
+            self.turret_sprites[key] = resized_sprite
 
 def laser(screen:pygame.surface.Surface, origin:tuple,
           angle:float) -> tuple:
@@ -161,12 +159,30 @@ def laser(screen:pygame.surface.Surface, origin:tuple,
     
     return origin, origin+length
 
-def background(screen:pygame.surface.Surface):
-    WIDTH = screen.get_width()
-    HEIGHT = screen.get_height()
+def background() -> pygame.surface.Surface:
+    """Load background image
+
+    Returns:
+        pygame.surface.Surface: Background Surface
+    """     
     background_img = pygame.image.load("assets/images/background.png")
     background_img = background_img.convert()
-    screen.blit(background_img, (0,0))
+    
+    return background_img
+
+def turret_base_sprite(coef:float = 0.5) -> pygame.surface.Surface:
+    """Loads and resizes the turret base sprite
+
+    Args:
+        coef : Reduction factor value. Defaults to 0.5.
+
+    Returns:
+        pygame.surface.Surface: _description_
+    """    
+    base_sprite = pygame.image.load("assets/images/sprites/turret_base.png")
+    base_sprite = pygame.transform.smoothscale_by(base_sprite, coef)
+    
+    return base_sprite
 
 def debug_mode(screen:pygame.surface.Surface, refs:dict, 
                rotationObject, mobsObject):
@@ -174,9 +190,13 @@ def debug_mode(screen:pygame.surface.Surface, refs:dict,
     Like highlighting reference points
 
     Args:
-        screen: The main surface on which to draw
+        screen: The main Pygame surface
         refs: Dictionary containing the coordinates of 
         all reference points
+        rotationObject : Collects information related to the 
+        angular state of the turret
+        mobsObject : Collects information related to the quantity 
+        of mobs present on the screen
     """
     screen_width = screen.get_width()
     screen_height = screen.get_height()

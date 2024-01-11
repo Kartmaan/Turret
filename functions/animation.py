@@ -1,5 +1,5 @@
 import os
-from functions.display import pygame, random, turret_sprites
+from functions.display import pygame, random
 from functions.sound import sounds
 
 sentinel_sound = sounds("sentinel")
@@ -25,10 +25,11 @@ class Rotation():
     self.angle = 0
     self.rotation_speed_sentinel = 0.6
     self.rotation_speed_alert = 0.1
-    self.rotation_speed_fire = 0.0
+    self.rotation_speed_fire = 0.0 # No rotation
     self.mode = "sentinel" # "alert", "fire"
     
   def rotate(self):
+    """Increases the angle value depending on the rotation mode"""
     if self.mode == "sentinel": # Search for targets
       self.angle += self.rotation_speed_sentinel
     if self.mode == "alert": # Target found
@@ -138,8 +139,8 @@ def steam_jet(screen:pygame.surface.Surface, refs:dict,
     if steam_anim.steam_played < 1:
         steam_anim.animate(anim_bool=True)
 
-def rotate_turret(screen:pygame.surface.Surface, rotationObject,
-                  refs:dict):
+def rotate_turret(screen:pygame.surface.Surface, turretObject,
+                  rotationObject, refs:dict):
     """Rotates the turret
 
     Args:
@@ -150,21 +151,22 @@ def rotate_turret(screen:pygame.surface.Surface, rotationObject,
     WIDTH = screen.get_width()
     HEIGHT = screen.get_height()
     if rotationObject.mode == "sentinel":
+        steam_anim.steam_played = 0
         deploy_played = 0
         if not pygame.mixer.get_busy():
             sentinel_sound.play()
-        turret_image = turret_sprites()["turret_on"]
+        turret_image = turretObject.turret_sentinel
         
     if rotationObject.mode == "alert":
         sentinel_sound.fadeout(10)
         if not pygame.mixer.get_busy():
             alert_sound.play()
-        turret_image = turret_sprites()["turret_alert"]
+        turret_image = turretObject.turret_alert
     
     if rotationObject.mode == "fire":
         alert_sound.fadeout(10)
         sentinel_sound.stop()
-        turret_image = turret_sprites()["turret_deploy"]
+        turret_image = turretObject.turret_fire
         if not pygame.mixer.get_busy() and deploy_played < 1:
             deploy_sound.play()
             deploy_played+=1

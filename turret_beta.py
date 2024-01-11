@@ -1,15 +1,17 @@
 import sys
-from functions.display import pygame, Mobs, turret_sprites, laser
-from functions.display import background, debug_mode
+from functions.display import pygame, Mobs, TurretSprites, laser
+from functions.display import background, turret_base_sprite, debug_mode
 from functions.geometry import ref_points, detection
 from functions.animation import Rotation, rotate_turret, make_it_rain
 
 rotation = Rotation()
+turrets = TurretSprites()
+mobs = Mobs()
 
-# Initialisation de Pygame
+# Pygame initialisation
 pygame.init()
 
-# Définir la taille de la fenêtre
+# Main surface initialisation
 WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
@@ -19,83 +21,86 @@ rain = False
 clock = pygame.time.Clock()
 fps = 60
 
-# ---- BASE
-# Image de la base
-base_image = pygame.image.load("assets/images/sprites/turret_base.png")
-base_rect = base_image.get_rect()
+# BACKGROUND
+background_img = background()
 
-# Redimension de la base
-coef = 0.5 #2
-new_base_size = (base_rect.width*coef, base_rect.height*coef)
-resized_base = pygame.transform.smoothscale(base_image, new_base_size)
-#print(resized_base)
+# TURRET BASE
+turret_base = turret_base_sprite()
+turret_base_rect = turret_base.get_rect()
+turret_base_rect.center = (WIDTH//2, HEIGHT//2)
 
-# Positionnement de la base
-base_rect.center = (WIDTH//2, HEIGHT//2)
-base_rect = resized_base.get_rect(center=(WIDTH//2, HEIGHT//2))
-#print(base_rect)
-
-# ---- TOURELLE
-turret_image = turret_sprites()["turret_on"]
+# TURRET
+turret_image = turrets.turret_sentinel
 turret_rect = turret_image.get_rect()
-#print(turret_rect)
-
-# Positionnement de la tourelle
 turret_rect.center = (WIDTH//2, HEIGHT//2)
 
-# ---- MOBS
-mobs = Mobs()
-
-# Boucle principale
+# MAIN LOOP
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
         
+        # LEFT CLICK
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-          mobs.add_mob(screen, pygame.mouse.get_pos())
+          mobs.add_mob(screen, pygame.mouse.get_pos(), turret_base)
+        # RIGHT CLICK
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+          mobs.kill_mob()
     
-    # Effacer l'écran
+    # Erase screen
     screen.fill((25, 25, 25))
     
+    # If debug mode is activated the background and the 
+    # turret base isn't displayed
     if not debug:
-      background(screen)
+      screen.blit(background_img, (0,0))
+      screen.blit(turret_base, turret_base_rect)
     
-    # Affichage continu des mobs
+    # Display of living mobs
     for mob in mobs.living_mobs:
       screen.blit(mob['image'], mob['rect'])
 
-    # Affichage de la base
-    if not debug:
-      screen.blit(resized_base, base_rect)
-
+    # Updating reference points at each rotation angle
     refs = ref_points(screen, turret_rect, rotation.angle)
     
-    # ---- MISE A JOUR
-    # Affichage de la rotation
-    rotate_turret(screen, rotation, refs)
+    # Rotates the turret by one angle value
+    rotate_turret(screen, turrets, rotation, refs)
+    
+    # Displays the laser segment and returns the coordinates 
+    # of its ends
     laser_segment = laser(screen, refs["laser_start"], rotation.angle)
+    
+    # Checks if a mob is intersected by the segment and returns 
+    # the coordinates of that mob if so. If nothing is detected, 
+    # the function returns None
     laser_detect = detection(laser_segment[0], laser_segment[1], mobs.living_mobs)
     
+    # Displaying debug mode
     if debug:
       debug_mode(screen, refs, rotation, mobs)
-      
+    
+    # Displaying rain
     if rain:
       make_it_rain(screen)
     
+    # No mobs intersected by the laser segment
     if laser_detect == None:
       rotation.mode="sentinel"
-      
+    
+    # Mob intersected by the laser segment
     if laser_detect != None:
       rotation.mode="alert"
-      
+    
+    # Checks if a mob is intersected by the cannon segment 
+    # (segment visible only in debug mode)
     cannon_detect = detection(refs["cannon"], refs["target"], mobs.living_mobs)
+    # Mob intersected by the cannon segment
     if cannon_detect != None:
       rotation.mode="fire"
     
-    # Mettre à jour l'affichage
+    # Display upadate
     pygame.display.flip()
 
-    # Limiter la vitesse de la boucle
+    # Limit loop speed
     clock.tick(fps)
