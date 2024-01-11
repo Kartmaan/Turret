@@ -16,7 +16,7 @@ WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
-debug = True
+debug = False
 rain = False
 clock = pygame.time.Clock()
 fps = 60

@@ -75,6 +75,45 @@ class Mobs():
     
         return mob
     
+    def too_close_to_base(self, rect:pygame.Rect, pos:tuple) -> bool:
+        """Checks if the mob's position isn't too close to the 
+        turret base
+
+        Args:
+            rect : Turret base rect
+            pos : Cursor position when clicked
+
+        Returns:
+            bool : True if too close, False otherwise
+        """
+        # The rect base is slightly inflated to also include 
+        # its proximity
+        proximity = 100
+        rect = rect.inflate(proximity,proximity)
+        
+        if rect.collidepoint(pos[0], pos[1]):
+            return True
+        else:
+            return False
+    
+    def too_close_to_mob(self, pos:tuple) -> bool:
+        """Checks if the mob's position isn't too close to another
+        mob position 
+
+        Args:
+            pos : Cursor position when clicked
+
+        Returns:
+            bool: True if too close, False otherwise
+        """        
+        proximity = 50
+        if len(self.living_mobs) >= 1:
+            for mob in self.living_mobs:
+                rect = mob['rect'].inflate(proximity, proximity)
+                if rect.collidepoint(pos[0], pos[1]):
+                    return True
+            return False
+    
     def add_mob(self, screen:pygame.surface.Surface, pos:tuple,
                 turret_base:pygame.surface.Surface):
         """Adds a mob to the list of mobs to display 
@@ -83,18 +122,29 @@ class Mobs():
         Args:
             screen : The main surface on which to draw
             pos : Cursor position when clicked
+            turret_base : Get the rect of the surface of the turret 
+            base to ensure that no mob can appear on it or in its 
+            direct vicinity
         """
-        # The number of mobs on the screen must not exceed the 
-        # value of self.max_living_mobs
-        # TODO : Prevent a mob from spawning too close to the 
-        # turret base
-        # TODO : Prevent a mob from spawning too close to 
-        # another mob
-        if len(self.living_mobs) < self.max_living_mobs:
+        WIDTH = screen.get_width()
+        HEIGHT = screen.get_height()
+        
+        turret_base_rect = turret_base.get_rect()
+        turret_base_rect.center = (WIDTH//2, HEIGHT//2)
+        close_to_base = self.too_close_to_base(turret_base_rect, pos)
+        
+        close_to_mob = self.too_close_to_mob(pos)
+        
+        # A new mob is added to the screen upon clicking if these 
+        # conditions are met : 
+        # 1) The number of mobs present on the screen must not exceed 
+        # the value of self.max_living_mobs
+        # 2) The mob must not be too close to the turret base
+        # 3) The mob must not be too close to another mob
+        if (len(self.living_mobs) < self.max_living_mobs and not 
+            close_to_base and not close_to_mob):
             mob = self.mobs_gen()
             pos_x, pos_y = pos
-            WIDTH = screen.get_width()
-            HEIGHT = screen.get_height()
             dist = get_distance((WIDTH//2, HEIGHT//2), (pos_x, pos_y))
             
             new_mob = {'image':mob, 
