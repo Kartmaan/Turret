@@ -16,8 +16,8 @@ WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
-debug = False
-rain = False
+debug = True
+rain = True
 clock = pygame.time.Clock()
 fps = 60
 
@@ -76,10 +76,6 @@ while True:
     # the function returns None
     laser_detect = detection(laser_segment[0], laser_segment[1], mobs.living_mobs)
     
-    # Displaying debug mode
-    if debug:
-      debug_mode(screen, refs, rotation, mobs)
-    
     # Displaying rain
     if rain:
       make_it_rain(screen)
@@ -98,6 +94,11 @@ while True:
     # Mob intersected by the cannon segment
     if cannon_detect != None:
       rotation.mode="fire"
+    
+    # Displaying debug mode
+    if debug:
+      debug_mode(screen, refs, turret_base_rect, 
+                 rotation, mobs, cannon_detect, clock)
     
     # Display upadate
     pygame.display.flip()

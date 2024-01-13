@@ -1,16 +1,10 @@
 import os
 from functions.display import pygame, random
-from functions.sound import sounds
+from functions.sound import SoundManager
 
-sentinel_sound = sounds("sentinel")
-alert_sound = sounds("alert")
-
-deploy_sound = sounds("deploy")
+sounds = SoundManager()
 deploy_played = 0
-
-rain_sound = sounds("rain")
 rain_played = 0
-
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
   values in the program and must be able to be consulted and modified 
@@ -23,6 +17,7 @@ class Rotation():
   """  
   def __init__(self):
     self.angle = 0
+    self.current_speed = 0
     self.rotation_speed_sentinel = 0.6
     self.rotation_speed_alert = 0.1
     self.rotation_speed_fire = 0.0 # No rotation
@@ -32,10 +27,13 @@ class Rotation():
     """Increases the angle value depending on the rotation mode"""
     if self.mode == "sentinel": # Search for targets
       self.angle += self.rotation_speed_sentinel
+      self.current_speed = self.rotation_speed_sentinel
     if self.mode == "alert": # Target found
       self.angle += self.rotation_speed_alert
+      self.current_speed = self.rotation_speed_alert
     if self.mode == "fire": # Ready to fire
       self.angle += self.rotation_speed_fire
+      self.current_speed = self.rotation_speed_fire
     
   def get_angle(self):
     """ Get current turret angle """
@@ -62,7 +60,7 @@ class SteamAnimation(pygame.sprite.Sprite):
         self.image = self.sprites[self.current_sprite]
         
         self.rect = self.image.get_rect()
-        self.rect.center = pygame.math.Vector2(100,100)
+        #self.rect.bottomleft = pygame.math.Vector2(100,100)
     
     def how_many_sprites(self, folder:str) -> int:
         """Determines how many .png files are in the folder
@@ -89,12 +87,12 @@ class SteamAnimation(pygame.sprite.Sprite):
         TODO : Arranger l'orientation du sprite selon les 
         coordonnées 'steam_origin' et 'steam_end' """
         self.sprites = []
-        self.rect.center = refs["steam_origin"]
+        self.rect.center = refs["steam_end"]
         for i in range(0,self.number_of_sprites):
             path = self.folder + f"/steam_{i}.png"
             img = pygame.image.load(path)
             img = pygame.transform.smoothscale_by(img, 0.5)
-            img = pygame.transform.rotate(img, rotationObject.angle)
+            #img = pygame.transform.rotate(img, rotationObject.angle)
             self.sprites.append(img)
             
     def animate(self, anim_bool:bool = True):
@@ -154,21 +152,21 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
         steam_anim.steam_played = 0
         deploy_played = 0
         if not pygame.mixer.get_busy():
-            sentinel_sound.play()
+            sounds.play_sound("sentinel")
         turret_image = turretObject.turret_sentinel
         
     if rotationObject.mode == "alert":
-        sentinel_sound.fadeout(10)
+        sounds.stop_sound("sentinel")
         if not pygame.mixer.get_busy():
-            alert_sound.play()
+            sounds.play_sound("alert")
         turret_image = turretObject.turret_alert
     
     if rotationObject.mode == "fire":
-        alert_sound.fadeout(10)
-        sentinel_sound.stop()
+        sounds.stop_sound("alert")
+        sounds.stop_sound("sentinel")
         turret_image = turretObject.turret_fire
         if not pygame.mixer.get_busy() and deploy_played < 1:
-            deploy_sound.play()
+            sounds.play_sound("deploy")
             deploy_played+=1
         
         steam_jet(screen, refs, rotationObject)
@@ -188,7 +186,11 @@ def make_it_rain(screen:pygame.surface.Surface):
 
     Args:
         screen : The main surface on which to draw
-    """    
+    """
+    global rain_played
+    if rain_played < 1:
+        sounds.play_rain()
+        rain_played += 1
     WIDTH = screen.get_width()
     HEIGHT = screen.get_height()
     raindrop_color = (220, 220, 200)

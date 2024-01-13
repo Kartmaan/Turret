@@ -101,6 +101,7 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
     bottom_left = tuple(rotated_points[3])
     left_side = midpoint(top_left, bottom_left)
     right_side = midpoint(top_right, bottom_right)
+    bottom = midpoint(bottom_left, bottom_right)
     
     # Get distances
     small_side = get_distance(top_left, top_right)
@@ -130,6 +131,11 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
         "bottom_left" : bottom_left,
         "left_side" : left_side,
         "right_side" : right_side,
+        "bottom" : bottom,
+        
+        # Sizes
+        "long_side" : long_side,
+        "small_side" : small_side,
         
         # Cannon
         "cannon" : cannon_point,

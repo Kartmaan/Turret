@@ -18,6 +18,7 @@ class Mobs():
         self.potential_mobs = self.loading_sprites()
         self.living_mobs = []
         self.max_living_mobs = 8
+        self.turret_base_proximity = 100
     
     def how_many_sprites(self, folder:str) -> int:
         """Determines how many mob .png files are in the folder.
@@ -88,7 +89,7 @@ class Mobs():
         """
         # The rect base is slightly inflated to also include 
         # its proximity
-        proximity = 100
+        proximity = self.turret_base_proximity
         rect = rect.inflate(proximity,proximity)
         
         if rect.collidepoint(pos[0], pos[1]):
@@ -156,7 +157,7 @@ class Mobs():
     
     def kill_mob(self):
         if len(self.living_mobs) >= 1:
-            del self.living_mobs[-1]
+            del self.living_mobs[0]
 
 class TurretSprites():
     """Enables you to recover the surface of the turret sprite 
@@ -203,7 +204,7 @@ def laser(screen:pygame.surface.Surface, origin:tuple,
     """    
     screen_width = screen.get_width()
     color=(255,0,0)
-    thickness = 4
+    thickness = 3
     length = pygame.math.Vector2(0,-screen_width).rotate(-angle)
     pygame.draw.line(screen, color, origin, origin+length, thickness)
     
@@ -234,25 +235,89 @@ def turret_base_sprite(coef:float = 0.5) -> pygame.surface.Surface:
     
     return base_sprite
 
-def debug_mode(screen:pygame.surface.Surface, refs:dict, 
-               rotationObject, mobsObject):
+def debug_mode(screen:pygame.surface.Surface, refs:dict,
+               turret_base:pygame.rect.Rect, rotationObject, 
+               mobsObject, cannon_detect:tuple,
+               clock:pygame.time.Clock):
     """Shows on-screen information about animation states.
     Like highlighting reference points
 
     Args:
         screen: The main Pygame surface
+        
         refs: Dictionary containing the coordinates of 
         all reference points
+        
+        turret_base : Allows you to visualize the perimeter 
+        of the turret base as well as its proximity, an area 
+        in which mobs cannot appear
+        
         rotationObject : Collects information related to the 
         angular state of the turret
+        
         mobsObject : Collects information related to the quantity 
         of mobs present on the screen
+        
+        cannon_detect :
+        
+        clock : Allows you to retrieve the effective fps value
     """
-    screen_width = screen.get_width()
-    screen_height = screen.get_height()
+    WIDTH = screen.get_width()
+    HEIGHT = screen.get_height()
     
+    # Colors
+    white = (255,255,255)
+    red = (255, 0, 0)
+    green = (0, 255, 0)
+    orange = (255, 165, 0)
+    
+    # Load texts
+    font = pygame.font.Font(None, 20)
+    
+    win_size = f"Window size : {WIDTH}x{HEIGHT}"
+    fps = f"FPS : {round(clock.get_fps(), 2)}"
+    turret_size = f"Turret size = {int(refs["small_side"])}x{int(refs["long_side"])}"
+    angle_text = f"Turret angle : {rotationObject.get_angle()}"
+    turret_speed = f"Turret speed : {rotationObject.current_speed}"
+    turret_mode = f"Turret mode : {rotationObject.mode}"
+    max_mob = f"Maximum mobs : {mobsObject.max_living_mobs}"
+    living_mobs = f"Living mobs : {len(mobsObject.living_mobs)}"
+    detected_mob = f"Detected mob : {cannon_detect}"
+    
+    all_text = [win_size, fps, turret_size, angle_text, turret_speed,
+                turret_mode, max_mob, living_mobs, detected_mob]
+    
+    # Displays texts
+    pos_x = 20
+    pos_y = 20
+    offset = 20 # y axis offset
+    
+    for text in all_text:
+        text_surface = font.render(text, True, white)
+        text_rect = text_surface.get_rect(topleft=(pos_x, pos_y))
+        screen.blit(text_surface, text_rect)
+        pos_y += offset
+    
+    # Displays turret base rect and its proximity, areas in which 
+    # mobs cannot appear
+    
+    proximity = mobsObject.turret_base_proximity
+    turret_base_inflated = turret_base.inflate(proximity, proximity) 
+    
+    turret_base_inflated.center = (WIDTH//2, HEIGHT//2)
+    turret_base.center = (WIDTH//2, HEIGHT//2)
+    
+    pygame.draw.rect(screen, green, turret_base, 2)
+    pygame.draw.rect(screen, orange, turret_base_inflated, 2)
+    
+    # Displays referential points
+    vertices = ["top_left", "top_right", "bottom_right", "bottom_left"]
     for key, pos in refs.items():
-        pygame.draw.circle(screen, (255,0,0), (pos[0], pos[1]), 5)
+        if not isinstance(pos, float):
+            if key in vertices:
+                pygame.draw.circle(screen, white, (pos[0], pos[1]), 4)
+            else: 
+                pygame.draw.circle(screen, red, (pos[0], pos[1]), 4)
     
-    # Cannon target line
-    pygame.draw.line(screen, (255,255,255), refs["cannon"], refs["target"], 2)
+    # Displays cannon target line
+    pygame.draw.line(screen, white, refs["cannon"], refs["target"], 2)

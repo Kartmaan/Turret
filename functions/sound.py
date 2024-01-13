@@ -1,23 +1,50 @@
 from functions.display import pygame
 
 pygame.mixer.init()
-sentinel_sound = pygame.mixer.Sound("assets/sound/sentinel.ogg")
 
-alert_sound = pygame.mixer.Sound("assets/sound/alert.ogg")
-alert_sound.set_volume(0.7)
+class SoundManager():
+    def __init__(self):
+        # Paths
+        self.paths = {
+            "sentinel" : "assets/sound/sentinel.ogg",
+            "alert" : "assets/sound/alert.ogg",
+            "deploy" : "assets/sound/deploy.wav",
+            "steam" : "assets/sound/steam.wav",
+            "fire" : "assets/sound/fire.wav",
+            "destroy" : "assets/sound/destroy.mp3"}
+        
+        self.sound_adjust = {
+            "alert" : 0.7,
+            "deploy" : 0.15
+        }
+        
+        self.rain_sound = pygame.mixer.music.load("assets/sound/rain.ogg")
+        
+        # Sounds
+        self.sounds = {}
+        for key, path in self.paths.items():
+            snd = pygame.mixer.Sound(path)
+            if key in self.sound_adjust.keys():
+                snd.set_volume(self.sound_adjust[key])
+            self.sounds[key] = snd
 
-deploy_sound = pygame.mixer.Sound("assets/sound/deploy.wav")
-deploy_sound.set_volume(0.4)
+        # Channels
+        self.channels = {key: pygame.mixer.Channel(i) for i, key in enumerate(self.sounds)}
 
-rain_sound = pygame.mixer.music.load("assets/sound/rain.ogg")
+    def play_sound(self, sound_name):
+        if sound_name in self.sounds and sound_name in self.channels:
+            self.channels[sound_name].play(self.sounds[sound_name])
 
-def sounds(sound_name:str) -> pygame.mixer.Sound:
-    """ Returns the desired sound """
-    sounds_dict = {
-        "sentinel": sentinel_sound,
-        "alert" : alert_sound,
-        "deploy" : deploy_sound,
-        "rain" : rain_sound
-    }
+    def stop_sound(self, sound_name):
+        if sound_name in self.channels:
+            self.channels[sound_name].stop()
+
+    def is_sound_playing(self, sound_name):
+        if sound_name in self.channels:
+            return self.channels[sound_name].get_busy()
     
-    return sounds_dict[sound_name]
+    def set_volume(self, sound_name, val):
+        pass
+    
+    def play_rain(self):
+        pygame.mixer.music.play(-1)
