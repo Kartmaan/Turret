@@ -25,6 +25,7 @@ class Mobs():
     """    
     def __init__(self):
         self.folder = "assets/images/sprites"
+        self.size_reduction = 0.10
         self.potential_mobs = self.loading_sprites()
         self.living_mobs = []
         self.max_living_mobs = 10
@@ -64,7 +65,8 @@ class Mobs():
 
         Returns:
             list: All potential mobs
-        """        
+        """
+        coef = self.size_reduction        
         mobs = []
         
         for i in range(1, self.how_many_sprites(self.folder)+1):
@@ -149,8 +151,8 @@ class Mobs():
         
         # A new mob is added to the screen upon clicking if these 
         # conditions are met : 
-        # 1) The number of mobs present on the screen must not exceed 
-        # the value of self.max_living_mobs
+        # 1) The number of mobs present on the screen must not 
+        # exceed the value of self.max_living_mobs
         # 2) The mob must not be too close to the turret base
         # 3) The mob must not be too close to another mob
         if (len(self.living_mobs) < self.max_living_mobs and not 
@@ -166,7 +168,26 @@ class Mobs():
             
             self.living_mobs.append(new_mob)
     
+    def destroyed_mob(self):
+        """Replaces the image of the mob targeted by a destroyed 
+        mob sprite, this allows the turret to remain aligned with 
+        the target while the aniamtion of the explosion ends: 
+        technically the target is not yet deleted 
+        """
+        # The size of the image of the destroyed mob is reduced by 
+        # a factor identical to that of living mobs in order to 
+        # preserve the coherence, the image also undergoes a random 
+        # rotation so that the debrits seem different for each destruction
+        for idx, mob in enumerate(self.living_mobs.copy()):
+            if mob['pos'] == self.in_target:
+                img = pygame.image.load("assets/images/sprites/destroyed.png")
+                img = pygame.transform.smoothscale_by(img, self.size_reduction)
+                img = pygame.transform.rotate(img, random.randint(1,270))
+                self.living_mobs[idx]['image'] = img
+    
     def kill_mob(self):
+        """The targeted mob is definitely destroyed and deleted 
+        from the display"""
         for idx, mob in enumerate(self.living_mobs.copy()):
             if mob['pos'] == self.in_target:
                 del self.living_mobs[idx]

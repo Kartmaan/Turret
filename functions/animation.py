@@ -9,7 +9,14 @@ from functions.display import pygame, random
 from functions.sound import SoundManager
 
 sounds = SoundManager()
-deploy_played = 0
+
+# Some sounds should only be played once when the event occurs, 
+# these variables will make it possible to ensure it. It will be 
+# uncremented by 1 when the event takes place and reset to 0 at 
+# the exit of the event
+deploy_sound_played = 0
+bang_sound_played  = 0
+
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
   values in the program and must be able to be consulted and modified 
@@ -127,9 +134,7 @@ class BangAnimation():
         self.current_pos = None
         self.move_vector = None
         self.speed = 3
-        #self.show_projectile = False
-        self.in_move = False
-        self.bang_played = 0
+        self.bang_played = 0 # Animation
         self.vals_initialized = 0
     
     def init_vals(self, start:pygame.math.Vector2, 
@@ -146,9 +151,13 @@ class BangAnimation():
     
     def animate(self, screen:pygame.surface.Surface, start:pygame.math.Vector2, 
              target:pygame.math.Vector2, mobsObject):
+        global bang_sound_played
         self.init_vals(start, target)
         
         if self.bang_played < 1:
+            if bang_sound_played < 1:
+                sounds.play_sound("fire")
+                bang_sound_played += 1
             self.green_val = (self.green_val + self.color_jump) % 255
             radius = random.randint(2,9)
             self.current_pos += self.move_vector * self.speed
@@ -157,7 +166,8 @@ class BangAnimation():
 
             if self.current_pos.distance_to(self.target_point) < 5:
                 self.bang_played = 1
-                mobsObject.kill_mob()
+                mobsObject.destroyed_mob()
+                #mobsObject.kill_mob()
 
 steam_sprites = pygame.sprite.Group()
 steam_anim = SteamAnimation()
@@ -190,7 +200,8 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
         screen: The main surface on which to draw
         rotationObject: Rotation object
     """
-    global deploy_played    
+    global deploy_sound_played
+    global bang_sound_played    
     WIDTH = screen.get_width()
     HEIGHT = screen.get_height()
     if rotationObject.mode == "sentinel":
@@ -213,12 +224,13 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
         sounds.stop_sound("alert")
         sounds.stop_sound("sentinel")
         turret_image = turretObject.turret_fire
-        if deploy_played < 1:
+        if deploy_sound_played < 1:
             sounds.play_sound("deploy")
-            deploy_played+=1
+            deploy_sound_played+=1
         
-        steam_jet(screen, refs, rotationObject)
-        bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
+        if not sounds.in_playing("deploy"):
+            steam_jet(screen, refs, rotationObject)
+            bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
         
     turret_rect = turret_image.get_rect()
     turret_rect.center = (WIDTH//2, HEIGHT//2)
