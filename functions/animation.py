@@ -1,10 +1,15 @@
+""" 
+animation.py - Animation module
+
+Module containing the classes and functions responsible for 
+different animations, such as turret rotation, rain or projectiles
+"""
 import os
 from functions.display import pygame, random
 from functions.sound import SoundManager
 
 sounds = SoundManager()
 deploy_played = 0
-rain_played = 0
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
   values in the program and must be able to be consulted and modified 
@@ -115,8 +120,48 @@ class SteamAnimation(pygame.sprite.Sprite):
             self.steam_played += 1   
         self.image = self.sprites[int(self.current_sprite)]
 
+class BangAnimation():
+    def __init__(self):
+        self.start_point = None
+        self.target_point = None
+        self.current_pos = None
+        self.move_vector = None
+        self.speed = 3
+        #self.show_projectile = False
+        self.in_move = False
+        self.bang_played = 0
+        self.vals_initialized = 0
+    
+    def init_vals(self, start:pygame.math.Vector2, 
+             target:pygame.math.Vector2):
+        if self.vals_initialized < 1:
+            self.start_point = start
+            self.target_point = target
+            self.current_pos = self.start_point
+            self.move_vector = self.target_point - self.start_point
+            self.move_vector.normalize_ip()
+            self.vals_initialized = 1
+            self.green_val = 200
+            self.color_jump = 20
+    
+    def animate(self, screen:pygame.surface.Surface, start:pygame.math.Vector2, 
+             target:pygame.math.Vector2, mobsObject):
+        self.init_vals(start, target)
+        
+        if self.bang_played < 1:
+            self.green_val = (self.green_val + self.color_jump) % 255
+            radius = random.randint(2,9)
+            self.current_pos += self.move_vector * self.speed
+            pygame.draw.circle(screen, (255,self.green_val,0), (int(self.current_pos.x), 
+                int(self.current_pos.y)), radius)
+
+            if self.current_pos.distance_to(self.target_point) < 5:
+                self.bang_played = 1
+                mobsObject.kill_mob()
+
 steam_sprites = pygame.sprite.Group()
 steam_anim = SteamAnimation()
+bang = BangAnimation()
 
 def steam_jet(screen:pygame.surface.Surface, refs:dict,
               rotationObject):
@@ -138,7 +183,7 @@ def steam_jet(screen:pygame.surface.Surface, refs:dict,
         steam_anim.animate(anim_bool=True)
 
 def rotate_turret(screen:pygame.surface.Surface, turretObject,
-                  rotationObject, refs:dict):
+                  rotationObject, mobsObject, refs:dict):
     """Rotates the turret
 
     Args:
@@ -150,14 +195,17 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
     HEIGHT = screen.get_height()
     if rotationObject.mode == "sentinel":
         steam_anim.steam_played = 0
+        bang.vals_initialized = 0
+        bang.bang_played = 0
+        mobsObject.in_target = None
         deploy_played = 0
-        if not pygame.mixer.get_busy():
+        if not sounds.in_playing("sentinel"):
             sounds.play_sound("sentinel")
         turret_image = turretObject.turret_sentinel
         
     if rotationObject.mode == "alert":
         sounds.stop_sound("sentinel")
-        if not pygame.mixer.get_busy():
+        if not sounds.in_playing("alert"):
             sounds.play_sound("alert")
         turret_image = turretObject.turret_alert
     
@@ -165,11 +213,12 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
         sounds.stop_sound("alert")
         sounds.stop_sound("sentinel")
         turret_image = turretObject.turret_fire
-        if not pygame.mixer.get_busy() and deploy_played < 1:
+        if deploy_played < 1:
             sounds.play_sound("deploy")
             deploy_played+=1
         
         steam_jet(screen, refs, rotationObject)
+        bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
         
     turret_rect = turret_image.get_rect()
     turret_rect.center = (WIDTH//2, HEIGHT//2)
@@ -187,10 +236,8 @@ def make_it_rain(screen:pygame.surface.Surface):
     Args:
         screen : The main surface on which to draw
     """
-    global rain_played
-    if rain_played < 1:
-        sounds.play_rain()
-        rain_played += 1
+    if not sounds.in_playing("rain"):
+        sounds.play_sound("rain")
     WIDTH = screen.get_width()
     HEIGHT = screen.get_height()
     raindrop_color = (220, 220, 200)

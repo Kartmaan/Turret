@@ -1,166 +1,114 @@
 import sys
-import math
-import pygame
+from functions.display import Mobs, TurretSprites, pygame, laser
+from functions.display import background, turret_base_sprite, debug_mode
+from functions.geometry import ref_points, detection
+from functions.animation import Rotation, rotate_turret, make_it_rain
+from functions.sound import MusicManager
 
-def get_distance(p1: tuple, p2: tuple) -> float:
-  """Returns the distance between two coordinates
+rotation = Rotation()
+turrets = TurretSprites()
+mobs = Mobs()
+music = MusicManager()
 
-  Args:
-  p1 : First coordinates
-  p2 : Second coordinates
-
-  Returns:
-  The distance between the two coordinates 
-  """
-  distance = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
-  return distance
-
-def get_angle(p1:tuple, p2:tuple) -> float:
-  angle_rad = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
-  angle_deg = math.degrees(angle_rad)
-  return angle_deg
-
-def get_angle_2(p1, p2, p3):
-  # Vecteur des deux côtés
-  vector1 = (p1[0] - p2[0], p1[1] - p2[1])
-  vector2 = (p3[0] - p2[0], p3[1] - p2[1])
-
-  # Calcul du produit scalaire
-  dot_product = vector1[0] * vector2[0] + vector1[1] * vector2[1]
-
-  # Calcul des longueurs des vecteurs
-  magn1 = math.sqrt(vector1[0]**2 + vector1[1]**2)
-  magn2 = math.sqrt(vector2[0]**2 + vector2[1]**2)
-
-  # Angle en radian
-  angle_rad = math.acos(dot_product / (magn1 * magn2))
-
-  # Conversion degré
-  angle_deg = math.degrees(angle_rad)
-
-  return angle_deg
-
-# Initialisation de Pygame
+# Pygame initialisation
 pygame.init()
 
-# Définir la taille de la fenêtre
+# Main surface initialisation
 WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
-# ---- BASE
-# Image de la base
-base_image = pygame.image.load("assets/images/sprites/turret_base.png")
-base_rect = base_image.get_rect()
+debug = False
+rain = True
+music_on = True
+clock = pygame.time.Clock()
+fps = 60
 
-# Redimension de la base
-coef = 2 #2
-new_base_size = (base_rect.width//coef, base_rect.height//coef)
-resized_base = pygame.transform.smoothscale(base_image, new_base_size)
-print(resized_base)
+if music_on:
+    music.play_music()
 
-# Positionnement de la base
-base_rect.center = (WIDTH//2, HEIGHT//2)
-base_rect = resized_base.get_rect(center=(WIDTH//2, HEIGHT//2))
+# BACKGROUND
+background_img = background()
 
-# ---- TOURELLE
-# Image de la tourelle
-turret_image = pygame.image.load("assets/images/sprites/turret_deploy.png")
+# TURRET BASE
+turret_base = turret_base_sprite()
+turret_base_rect = turret_base.get_rect()
+turret_base_rect.center = (WIDTH//2, HEIGHT//2)
+
+# TURRET
+turret_image = turrets.turret_sentinel
 turret_rect = turret_image.get_rect()
-#print(turret_rect)
-
-# Redimension de la tourelle
-coef = 1.5 #1.5
-new_turret_size = (turret_rect.width//coef, turret_rect.height//coef)
-resized_turret = pygame.transform.smoothscale(turret_image, new_turret_size)
-resized_turret_rect = resized_turret.get_rect()
-print(resized_turret_rect)
-
-# Positionnement de la tourelle
 turret_rect.center = (WIDTH//2, HEIGHT//2)
 
-# ---- ROTATING LASER
-# Position initiale
-rect = resized_turret.get_rect()
-center = (WIDTH//2, HEIGHT//2)
-
-# Rayon de rotation de center
-radius_vector = pygame.math.Vector2(20,0)
-
-# Vecteurs initiaux
-start_vector = center + radius_vector
-line_vector = center + pygame.math.Vector2(WIDTH//2,0)
-
-# ---- MOBS
-# Image du mob
-mob_image = pygame.image.load("assets/images/sprites/mob.png")
-mob_rect = mob_image.get_rect()
-
-# Redimension du mob
-coef = 10
-new_mob_size = (mob_rect.width//coef, mob_rect.height//coef)
-resized_mob = pygame.transform.smoothscale(mob_image, new_mob_size)
-
-# Emplacement des mobs
-mob_sprites = []
-
-# ---- VARIABLES D'ANIMATION
-# Variables de la boucle principale
-angle = 0
-ROTATION_SPEED = -0.5
-rotation_speed = ROTATION_SPEED  # Vitesse de rotation (en degrés par image)
-clock = pygame.time.Clock()
-
-# Boucle principale
+# MAIN LOOP
 while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-          max_mobs = 5
-          if len(mob_sprites) <= max_mobs-1:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            dist = get_distance((WIDTH//2, HEIGHT//2), (mouse_x, mouse_y))
+  # Updating reference points at each rotation angle
+  refs = ref_points(screen, turret_rect, rotation.angle)
+  
+  for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+          pygame.quit()
+          sys.exit()
+      
+      # LEFT CLICK
+      if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        mobs.add_mob(screen, pygame.mouse.get_pos(), turret_base, refs)
+      # RIGHT CLICK
+      if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+        pass
+  
+  # Erase screen
+  screen.fill((25, 25, 25))
+  
+  # If debug mode is activated the background and the 
+  # turret base isn't displayed
+  if not debug:
+    screen.blit(background_img, (0,0))
+    screen.blit(turret_base, turret_base_rect)
+  
+  # Display of living mobs
+  for mob in mobs.living_mobs:
+    screen.blit(mob['image'], mob['rect'])
+  
+  # Rotates the turret by one angle value
+  rotate_turret(screen, turrets, rotation, mobs, refs)
+  
+  # Displays the laser segment and returns the coordinates 
+  # of its ends
+  laser_segment = laser(screen, refs["laser_start"], rotation.angle)
+  
+  # Checks if a mob is intersected by the segment and returns 
+  # the coordinates of that mob if so. If nothing is detected, 
+  # the function returns None
+  laser_detect = detection(laser_segment[0], laser_segment[1], mobs.living_mobs)
+  
+  # Displaying rain
+  if rain:
+    make_it_rain(screen)
+  
+  # No mobs intersected by the laser segment
+  if laser_detect == None:
+    rotation.mode="sentinel"
+  
+  # Mob intersected by the laser segment
+  if laser_detect != None:
+    rotation.mode="alert"
+  
+  # Checks if a mob is intersected by the cannon segment 
+  # (segment visible only in debug mode)
+  cannon_detect = detection(refs["cannon"], refs["target"], mobs.living_mobs)
+  # Mob intersected by the cannon segment
+  if cannon_detect != None:
+    rotation.mode="fire"
+    mobs.in_target = cannon_detect
+  
+  # Displaying debug mode
+  if debug:
+    debug_mode(screen, refs, turret_base_rect, 
+                rotation, mobs, clock)
+  
+  # Display upadate
+  pygame.display.flip()
 
-            new_mob = {'image':resized_mob, 
-            'rect': resized_mob.get_rect(center=(mouse_x, mouse_y)),
-            'pos' : (mouse_x, mouse_y),
-            'dist' : dist}
-
-            mob_sprites.append(new_mob)
-            #print(mob_sprites)
-
-    # Effacer l'écran
-    screen.fill((25, 25, 25))  # Fond blanc
-
-    # Affichage continu des mobs
-    for mob in mob_sprites:
-      screen.blit(mob['image'], mob['rect'])
-
-    # Affichage de la base
-    screen.blit(resized_base, base_rect)
-
-    # Rotation de la tourelle
-    rotated_turret = pygame.transform.rotate(resized_turret, angle)
-    rotated_turret_rect = rotated_turret.get_rect(center=turret_rect.center)
-
-    # ---- MISE A JOUR
-    # Affichage de la rotation
-    screen.blit(rotated_turret, rotated_turret_rect)
-
-    # Mettre à jour l'affichage
-    pygame.display.flip()
-
-    # Modifier l'angle pour simuler la rotation continue
-    angle += rotation_speed
-    #print(int(angle%360))
-
-    if 180 <= int(angle % 360) <= 270:
-      rotation_speed = ROTATION_SPEED-0.2
-    else:
-      rotation_speed = ROTATION_SPEED
-
-    # Limiter la vitesse de la boucle
-    clock.tick(60)
+  # Limit loop speed
+  clock.tick(fps)

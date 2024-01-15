@@ -1,24 +1,39 @@
+""" 
+sound.py - Sound module
+
+Module containing classes allowing you to load, manipulate 
+and play sounds as well as background music
+"""
 from functions.display import pygame
 
 pygame.mixer.init()
 
 class SoundManager():
+    """Class loading all the sounds likely to be used, allowing 
+    them to be manipulated and played via class functions.
+    
+    Each sound has its own channel and it's these channels that 
+    are manipulated. This allows, among other things, to know if 
+    a specific sound is being played by checking if its channel 
+    is busy.
+    """    
     def __init__(self):
         # Paths
         self.paths = {
             "sentinel" : "assets/sound/sentinel.ogg",
             "alert" : "assets/sound/alert.ogg",
             "deploy" : "assets/sound/deploy.wav",
-            "steam" : "assets/sound/steam.wav",
+            "steam" : "assets/sound/steam.ogg",
             "fire" : "assets/sound/fire.wav",
-            "destroy" : "assets/sound/destroy.mp3"}
+            "destroy" : "assets/sound/destroy.mp3",
+            "rain" : "assets/sound/rain.ogg"}
         
         self.sound_adjust = {
-            "alert" : 0.7,
-            "deploy" : 0.15
+            "sentinel" : 0.33,
+            "alert" : 0.33,
+            "deploy" : 0.15,
+            "rain" : 0.40
         }
-        
-        self.rain_sound = pygame.mixer.music.load("assets/sound/rain.ogg")
         
         # Sounds
         self.sounds = {}
@@ -39,12 +54,18 @@ class SoundManager():
         if sound_name in self.channels:
             self.channels[sound_name].stop()
 
-    def is_sound_playing(self, sound_name):
+    def in_playing(self, sound_name):
         if sound_name in self.channels:
             return self.channels[sound_name].get_busy()
+
+class MusicManager():
+    def __init__(self):
+        # Paths
+        self.music = pygame.mixer.music.load("assets/sound/atmosphere.mp3")
     
-    def set_volume(self, sound_name, val):
-        pass
-    
-    def play_rain(self):
+    def play_music(self, volume=0.66):
+        pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(-1)
+    
+    def pause_music(self):
+        pygame.mixer.music.pause()

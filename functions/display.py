@@ -1,3 +1,13 @@
+""" 
+display.py - Display module
+
+Module bringing together the classes and functions used 
+to resize and display the different elements of the 
+scene on the screen
+Note : The Pygame module is only imported into this module, 
+the other functions refer to this import to use the pygame 
+functions
+"""
 import pygame
 import random
 import os
@@ -17,8 +27,9 @@ class Mobs():
         self.folder = "assets/images/sprites"
         self.potential_mobs = self.loading_sprites()
         self.living_mobs = []
-        self.max_living_mobs = 8
+        self.max_living_mobs = 10
         self.turret_base_proximity = 100
+        self.in_target = None
     
     def how_many_sprites(self, folder:str) -> int:
         """Determines how many mob .png files are in the folder.
@@ -116,7 +127,7 @@ class Mobs():
             return False
     
     def add_mob(self, screen:pygame.surface.Surface, pos:tuple,
-                turret_base:pygame.surface.Surface):
+                turret_base:pygame.surface.Surface, refs:dict):
         """Adds a mob to the list of mobs to display 
         (self.living_mobs). 
 
@@ -146,18 +157,19 @@ class Mobs():
             close_to_base and not close_to_mob):
             mob = self.mobs_gen()
             pos_x, pos_y = pos
-            dist = get_distance((WIDTH//2, HEIGHT//2), (pos_x, pos_y))
+            dist = get_distance(refs["cannon"], (pos_x, pos_y))
             
             new_mob = {'image':mob, 
                        'rect':mob.get_rect(center=(pos_x, pos_y)),
                        'pos' : pygame.math.Vector2(pos_x, pos_y),
-                       'dist' : dist}
+                       'dist' : int(dist)}
             
             self.living_mobs.append(new_mob)
     
     def kill_mob(self):
-        if len(self.living_mobs) >= 1:
-            del self.living_mobs[0]
+        for idx, mob in enumerate(self.living_mobs.copy()):
+            if mob['pos'] == self.in_target:
+                del self.living_mobs[idx]
 
 class TurretSprites():
     """Enables you to recover the surface of the turret sprite 
@@ -210,13 +222,13 @@ def laser(screen:pygame.surface.Surface, origin:tuple,
     
     return origin, origin+length
 
-def background() -> pygame.surface.Surface:
+def background() -> pygame.surface.Surface: 
     """Load background image
 
     Returns:
         pygame.surface.Surface: Background Surface
     """     
-    background_img = pygame.image.load("assets/images/background.png")
+    background_img = pygame.image.load("assets/images/background_2.png")
     background_img = background_img.convert()
     
     return background_img
@@ -237,8 +249,7 @@ def turret_base_sprite(coef:float = 0.5) -> pygame.surface.Surface:
 
 def debug_mode(screen:pygame.surface.Surface, refs:dict,
                turret_base:pygame.rect.Rect, rotationObject, 
-               mobsObject, cannon_detect:tuple,
-               clock:pygame.time.Clock):
+               mobsObject, clock:pygame.time.Clock):
     """Shows on-screen information about animation states.
     Like highlighting reference points
 
@@ -282,7 +293,7 @@ def debug_mode(screen:pygame.surface.Surface, refs:dict,
     turret_mode = f"Turret mode : {rotationObject.mode}"
     max_mob = f"Maximum mobs : {mobsObject.max_living_mobs}"
     living_mobs = f"Living mobs : {len(mobsObject.living_mobs)}"
-    detected_mob = f"Detected mob : {cannon_detect}"
+    detected_mob = f"Detected mob : {mobsObject.in_target}"
     
     all_text = [win_size, fps, turret_size, angle_text, turret_speed,
                 turret_mode, max_mob, living_mobs, detected_mob]

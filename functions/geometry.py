@@ -1,3 +1,9 @@
+""" 
+geometry.py - Geometric functions module
+
+This module provides functions to perform geometric operations 
+useful in the context of this project.
+"""
 import numpy as np
 from functions.display import pygame
 
@@ -10,7 +16,7 @@ def midpoint(point1: tuple,
     Args:
         point1 : Coordinates of the 1st point
         point2 : Coordinates of the 2nd point
-        offset : Offset from center (-/+)
+        offset : Offset from center (-/+) (default = 0.0)
 
     Returns:
         tuple: The coordinates of the desired point
@@ -35,7 +41,15 @@ def get_distance(p1: tuple, p2: tuple) -> float:
 
 def matrix_rotation(rect: pygame.rect.Rect,
                     angle: float) -> np.ndarray:
-    """Rotate the vertices coordinates of a rect at a given angle
+    """Rotate the vertices coordinates of a rect at a given angle.
+    
+    The function allows you to locate the coordinates of the 4 vertices 
+    of the initial rect of the turret (i.e. before the start of its rotation), 
+    after an angle of rotation centered on the center of the rect. 
+    These 4 coordinates will be the bases from which all the reference 
+    points of the turret will be calculated in the ref_points() function.
+    These points rotate independently of the turret, but because they 
+    share the same Rotation object, they rotate together in sync
 
     Args:
         rect : A pygame.rect.Rect object
@@ -79,8 +93,11 @@ def matrix_rotation(rect: pygame.rect.Rect,
 def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect, 
                angle:float) -> dict:
     """Sets turret reference points at each rotation angle.
+    
     These points are used to precisely place different elements 
-    such as the laser or projectiles
+    such as the laser or projectiles. All points have as base 
+    reference the coordinates of the 4 vertices after an angle 
+    of rotation, coordinates provided by matrix_roatation()
 
     Args:
         rect: A Rect object
@@ -94,11 +111,13 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
     HEIGHT = screen.get_height()
     rotated_points = matrix_rotation(rect, angle)
     
-    # Rect vertices
+    # Rect vertices - BASE REFERENTIAL
     top_left = tuple(rotated_points[0])
     top_right = tuple(rotated_points[1])
     bottom_right = tuple(rotated_points[2])
     bottom_left = tuple(rotated_points[3])
+    
+    # Sides
     left_side = midpoint(top_left, bottom_left)
     right_side = midpoint(top_right, bottom_right)
     bottom = midpoint(bottom_left, bottom_right)
@@ -154,7 +173,7 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
     return refs
     
 def detection(origin:tuple, end:tuple, mob_sprites:list,
-              tolerance:float=0.2) -> tuple:
+              tolerance:float=0.2) -> pygame.math.Vector2:
     """Detects when a mob's coordinates intersect the laser segment.
     
     A-------------M-----B
@@ -176,7 +195,7 @@ def detection(origin:tuple, end:tuple, mob_sprites:list,
     """
     val_round = 1    
     for mob in mob_sprites:        
-        pos = mob['pos']
+        pos = mob['pos'] # pygame.math.Vector2
         dist1 = round(get_distance(origin, pos), val_round)
         dist2 = round(get_distance(pos, end), val_round)
         dist3 = round(get_distance(origin, end), val_round)
