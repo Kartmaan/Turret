@@ -199,9 +199,9 @@ class TurretSprites():
     """    
     def __init__(self):
         self.turret_sprites = {
-        "turret_sentinel" : pygame.image.load("assets/images/sprites/turret_sentinel.png"),
-        "turret_alert" : pygame.image.load("assets/images/sprites/turret_alert.png"),
-        "turret_fire" : pygame.image.load("assets/images/sprites/turret_fire.png")}
+        "turret_sentinel" : pygame.image.load("assets/images/sprites/turret_sentinel.png").convert_alpha(),
+        "turret_alert" : pygame.image.load("assets/images/sprites/turret_alert.png").convert_alpha(),
+        "turret_fire" : pygame.image.load("assets/images/sprites/turret_fire.png").convert_alpha()}
         
         self.resize()
         
@@ -263,7 +263,7 @@ def turret_base_sprite(coef:float = 0.5) -> pygame.surface.Surface:
     Returns:
         pygame.surface.Surface: _description_
     """    
-    base_sprite = pygame.image.load("assets/images/sprites/turret_base.png")
+    base_sprite = pygame.image.load("assets/images/sprites/turret_base.png").convert_alpha()
     base_sprite = pygame.transform.smoothscale_by(base_sprite, coef)
     
     return base_sprite

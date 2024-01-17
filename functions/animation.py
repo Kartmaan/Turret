@@ -248,6 +248,45 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
     
     rotationObject.rotate()
 
+class Thunder():
+    def __init__(self):
+        self.path = "assets/images/storm.png"
+        self.img = pygame.image.load(self.path)
+        self.in_lightning = False
+        self.lightning_start_time = None
+        self.lightning_duration = None
+    
+    def lightning_dice(self):
+        probability = 0.04
+        proba = probability / 100
+        
+        if self.in_lightning:
+            duration = time.time() - self.lightning_start_time
+            if duration <= self.lightning_duration:
+                return True
+            else:
+                self.in_lightning = False
+                return False
+        
+        rand_num = random.random()
+        
+        if rand_num < proba:
+            self.in_lightning = True
+            self.lightning_start_time = time.time()
+            self.lightning_duration = random.uniform(0.2,1.2)
+            print(f"lightning - duration : {round(self.lightning_duration,1)}s")
+            return True
+        else:
+            self.in_lightning = False
+            return False
+    
+    def lightning(self, screen=pygame.surface.Surface):
+        if self.lightning_dice():
+            screen.blit(self.img, (0,0))
+        
+
+thunder = Thunder()
+
 class MakeItRain():
     """Shows the rain animation on the screen as well as the 
     effect of the wind on it"""
@@ -269,7 +308,7 @@ class MakeItRain():
         speed = random.uniform(0.01, 0.08)
         return {'x': x, 'y' : y, 'speed' : speed}
     
-    def wind(self) -> bool:
+    def wind_dice(self) -> bool:
         """Sets the probability for a wind effect to appear. The 
         function returns True if the probability is realized, 
         False otherwise 
@@ -323,7 +362,7 @@ class MakeItRain():
         
         # Drawing raindrops
         for raindrop in raindrops:
-            if not self.wind(): # No wind
+            if not self.wind_dice(): # No wind
                 strong_wind_soung_played = 0
                 sounds.fadeout("strong_wind", 1000)
                 pygame.draw.line(self.screen, self.raindrop_color,
@@ -343,3 +382,5 @@ class MakeItRain():
             if raindrop['y'] > self.HEIGHT:
                 raindrop['y'] = 0
                 raindrop['x'] = random.randint(0, self.WIDTH)
+        
+        thunder.lightning(self.screen)

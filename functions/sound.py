@@ -28,7 +28,8 @@ class SoundManager():
             "destroy" : "assets/sound/destroy.mp3",
             "rain" : "assets/sound/rain.ogg",
             "wind" : "assets/sound/wind.ogg",
-            "strong_wind" : "assets/sound/strong_wind.ogg"
+            "strong_wind" : "assets/sound/strong_wind.ogg",
+            "thunder" : "assets/sound/thunder.ogg"
             }
         
         self.sound_adjust = {
