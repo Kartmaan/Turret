@@ -2,13 +2,8 @@ import sys
 from functions.display import Mobs, TurretSprites, pygame, laser
 from functions.display import background, turret_base_sprite, debug_mode
 from functions.geometry import ref_points, detection
-from functions.animation import Rotation, rotate_turret, make_it_rain
+from functions.animation import Rotation, MakeItRain, rotate_turret
 from functions.sound import MusicManager
-
-rotation = Rotation()
-turrets = TurretSprites()
-mobs = Mobs()
-music = MusicManager()
 
 # Pygame initialisation
 pygame.init()
@@ -17,6 +12,13 @@ pygame.init()
 WIDTH, HEIGHT = 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
+
+# Classes
+rotation = Rotation()
+turrets = TurretSprites()
+mobs = Mobs()
+rainfall = MakeItRain(screen)
+music = MusicManager()
 
 debug = False
 rain = True
@@ -55,7 +57,7 @@ while True:
         mobs.add_mob(screen, pygame.mouse.get_pos(), turret_base, refs)
       # RIGHT CLICK
       if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-        pass
+        mobs.kill_mob()
   
   # Erase screen
   screen.fill((25, 25, 25))
@@ -84,7 +86,7 @@ while True:
   
   # Displaying rain
   if rain:
-    make_it_rain(screen)
+    rainfall.rain()
   
   # No mobs intersected by the laser segment
   if laser_detect == None:

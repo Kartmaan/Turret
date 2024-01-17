@@ -26,13 +26,18 @@ class SoundManager():
             "steam" : "assets/sound/steam.ogg",
             "fire" : "assets/sound/fire.wav",
             "destroy" : "assets/sound/destroy.mp3",
-            "rain" : "assets/sound/rain.ogg"}
+            "rain" : "assets/sound/rain.ogg",
+            "wind" : "assets/sound/wind.ogg",
+            "strong_wind" : "assets/sound/strong_wind.ogg"
+            }
         
         self.sound_adjust = {
-            "sentinel" : 0.33,
+            "sentinel" : 0.44,
             "alert" : 0.33,
             "deploy" : 0.15,
-            "rain" : 0.40
+            "rain" : 0.55,
+            "wind" : 0.80,
+            "strong_wind" : 0.85
         }
         
         # Sounds
@@ -44,6 +49,7 @@ class SoundManager():
             self.sounds[key] = snd
 
         # Channels
+        pygame.mixer.set_num_channels(len(self.paths))
         self.channels = {key: pygame.mixer.Channel(i) for i, key in enumerate(self.sounds)}
 
     def play_sound(self, sound_name):
@@ -51,14 +57,31 @@ class SoundManager():
             self.channels[sound_name].play(self.sounds[sound_name])
 
     def stop_sound(self, sound_name):
+        """Stop playback of a channel immediatly
+
+        Args:
+            sound_name: The sound name
+        """        
         if sound_name in self.channels:
             self.channels[sound_name].stop()
+    
+    def fadeout(self, sound_name:str, time:int):
+        """Stop playback of a channel after fading out the sound 
+        over the given time argument in milliseconds
+
+        Args:
+            sound_name: The sound name
+            time: Fadout time in milliseconds
+        """        
+        if sound_name in self.channels:
+            self.channels[sound_name].fadeout(time)
 
     def in_playing(self, sound_name):
         if sound_name in self.channels:
             return self.channels[sound_name].get_busy()
 
 class MusicManager():
+    """Class for loading, playing and pausing background music"""
     def __init__(self):
         # Paths
         self.music = pygame.mixer.music.load("assets/sound/atmosphere.mp3")

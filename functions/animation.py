@@ -5,6 +5,7 @@ Module containing the classes and functions responsible for
 different animations, such as turret rotation, rain or projectiles
 """
 import os
+import time
 from functions.display import pygame, random
 from functions.sound import SoundManager
 
@@ -16,6 +17,7 @@ sounds = SoundManager()
 # the exit of the event
 deploy_sound_played = 0
 bang_sound_played  = 0
+strong_wind_soung_played = 0
 
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
@@ -128,6 +130,8 @@ class SteamAnimation(pygame.sprite.Sprite):
         self.image = self.sprites[int(self.current_sprite)]
 
 class BangAnimation():
+    """Projectile animation"""
+    
     def __init__(self):
         self.start_point = None
         self.target_point = None
@@ -208,6 +212,8 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
         steam_anim.steam_played = 0
         bang.vals_initialized = 0
         bang.bang_played = 0
+        bang_sound_played = 0
+        deploy_sound_played = 0
         mobsObject.in_target = None
         deploy_played = 0
         if not sounds.in_playing("sentinel"):
@@ -242,36 +248,98 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
     
     rotationObject.rotate()
 
-def make_it_rain(screen:pygame.surface.Surface):
-    """Makes rain appear according to certain parameters
-
-    Args:
-        screen : The main surface on which to draw
-    """
-    if not sounds.in_playing("rain"):
-        sounds.play_sound("rain")
-    WIDTH = screen.get_width()
-    HEIGHT = screen.get_height()
-    raindrop_color = (220, 220, 200)
-    raindrop_intensity = 40
-    raindrop_length = random.randint(2,10)
-    #rain_speed = random.uniform(0.1,0.8)
+class MakeItRain():
+    """Shows the rain animation on the screen as well as the 
+    effect of the wind on it"""
+    
+    def __init__(self, screen:pygame.surface.Surface):
+        self.screen = screen
+        self.WIDTH = self.screen.get_width()
+        self.HEIGHT = self.screen.get_height()
+        self.raindrop_color = (220, 220, 200)
+        self.raindrop_intensity = 40 # Raindrops on screen
+        self.in_wind = False # Wind animation in progress
+        self.wind_start_time = None
+    
+    def generate_raindrop(self) -> dict:
+        """Generates the coordinates of a raindrop in a dict"""
+        
+        x = random.randint(0, self.WIDTH)
+        y = random.randint(0, self.HEIGHT)
+        speed = random.uniform(0.01, 0.08)
+        return {'x': x, 'y' : y, 'speed' : speed}
+    
+    def wind(self) -> bool:
+        """Sets the probability for a wind effect to appear. The 
+        function returns True if the probability is realized, 
+        False otherwise 
+        """
+        
+        # We establish a low probability value because the rain 
+        # function will be called each time through the main 
+        # Pygame loop, i.e. several dozen times per second 
+        # depending on the fps.
+        probability = 0.003
+        wind_duration = random.randint(3,5)
+        
+        # A wind effect is already being animated, we ensure that 
+        # it lasts a time determined by the value in seconds of 
+        # wind_duration
+        if self.in_wind:
+            duration = time.time() - self.wind_start_time
+            if duration <= wind_duration:
+                return True
+            else:
+                self.in_wind = False
+                return False
+        
+        # No wind effect is being animated, we calculate the 
+        # probability of realization.
+        proba = probability / 100
+        rand_num = random.random()
+        if rand_num < proba:
+            print(f"wind - duration : {wind_duration}s")
+            self.in_wind = True
+            self.wind_start_time = time.time()
+            return True
+        else:
+            self.in_wind = False
+            return False
+    
+    def rain(self):
+        """Shows rain animation on screen"""
+        global strong_wind_soung_played
+        
+        if not sounds.in_playing("rain"):
+            sounds.play_sound("rain")
+        if not sounds.in_playing("wind"):
+            sounds.play_sound("wind")
+        
+        # Generating coordinates of all raindrops
+        raindrops = [self.generate_raindrop() for _ in range(self.raindrop_intensity)]
+        
+        # Random variation in the length of raindrops
+        raindrop_length = random.randint(2,10)
+        
+        # Drawing raindrops
+        for raindrop in raindrops:
+            if not self.wind(): # No wind
+                strong_wind_soung_played = 0
+                sounds.fadeout("strong_wind", 1000)
+                pygame.draw.line(self.screen, self.raindrop_color,
+                        (raindrop['x'], raindrop['y']),
+                        (raindrop['x'], raindrop['y'] + raindrop_length), 1)
             
-    def generate_raindrop():
-        x = random.randint(0, WIDTH)
-        y = random.randint(0, HEIGHT)
-        speed = random.uniform(0.01,0.08)
-        return {'x': x, 'y': y, 'speed' : speed}
-    
-    raindrops = [generate_raindrop() for _ in range(raindrop_intensity)]
-    
-    for raindrop in raindrops:
-        pygame.draw.line(screen, raindrop_color, 
-                (raindrop['x'], raindrop['y']),
-                (raindrop['x'], raindrop['y'] + raindrop_length), 1)
-        
-        raindrop['y'] += raindrop['speed']
-        
-        if raindrop['y'] > HEIGHT:
-            raindrop['y'] = 0
-            raindrop['x'] = random.randint(0, WIDTH)
+            else: # Wind
+                if not sounds.in_playing("strong_wind") and strong_wind_soung_played < 1:
+                    sounds.play_sound("strong_wind")
+                    strong_wind_soung_played += 1
+                pygame.draw.line(self.screen, self.raindrop_color,
+                        (raindrop['x'], raindrop['y']),
+                        (raindrop['x'] - raindrop_length, raindrop['y'] + raindrop_length), 1)
+            
+            #raindrop['y'] += raindrop['speed']
+            
+            if raindrop['y'] > self.HEIGHT:
+                raindrop['y'] = 0
+                raindrop['x'] = random.randint(0, self.WIDTH)
