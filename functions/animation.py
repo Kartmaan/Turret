@@ -249,38 +249,96 @@ def rotate_turret(screen:pygame.surface.Surface, turretObject,
     rotationObject.rotate()
 
 class Thunder():
+    """Makes lightning appear and thunder heard.
+    
+    Lightning appears according to a defined probability index 
+    and for a limited random time, just like the time between 
+    the disappearance of lightning and the sound of thunder."""
+    
     def __init__(self):
         self.path = "assets/images/storm.png"
         self.img = pygame.image.load(self.path)
+        
         self.in_lightning = False
         self.lightning_start_time = None
         self.lightning_duration = None
+        
+        self.after_lightning = False
+        self.after_lightning_start_time = None
+        self.after_lightning_duration = None
     
-    def lightning_dice(self):
-        probability = 0.04
+    def lightning_dice(self) -> bool:
+        """Function acting like a dice, if it returns True the 
+        lightning flash is displayed on the screen, if it returns 
+        False nothing is displayed. The lightning() function of 
+        this class only displays the lightning image according to 
+        the return of this function
+
+        Returns:
+            bool: A boolean
+        """        
+        probability = 0.06
         proba = probability / 100
         
+        # The lightning has just disappeared from the screen, 
+        # no other lightning must take place for a specific time, 
+        # in order to play the sound of thunder. The delay between 
+        # lightning and thunder is a random value in seconds :
+        # self.after_lightning_duration
+        if self.after_lightning:
+            duration = time.time() - self.after_lightning_start_time
+            if duration <= self.after_lightning_duration: # In time
+                return False
+            else: # Deadline
+                self.after_lightning = False
+                sounds.play_sound("thunder")
+                return False
+        
+        # A lightning bolt is being displayed, it will be 
+        # displayed for a time determined by 
+        # self.lightning_duration. After the time elapses, the 
+        # lightning disappears and the self.after_lightning 
+        # state variable is set to True
         if self.in_lightning:
             duration = time.time() - self.lightning_start_time
-            if duration <= self.lightning_duration:
+            if duration <= self.lightning_duration: # In time
                 return True
+            
+            else: # Deadline
+                self.in_lightning = False
+                self.after_lightning_start_time = time.time()
+                self.after_lightning_duration = random.uniform(2,4.5)
+                self.after_lightning = True
+                return False
+        
+        # We assume here that self.in_lightning and 
+        # self.after_lightning are False, we nevertheless wait 
+        # for the end of the "tunder" sound if it's being played
+        # to display a new lightning
+        if not sounds.in_playing("thunder"):
+            rand_num = random.random()
+            
+            # The probability is realized, the state variable 
+            # self.in_lightning is set to True
+            if rand_num < proba: # The probability is realized
+                self.in_lightning = True
+                self.lightning_start_time = time.time()
+                self.lightning_duration = random.uniform(0.2,1.2)
+                print(f"lightning - duration : {round(self.lightning_duration,1)}s")
+                return True
+            
+            # The probability isn't realized. No lightning
             else:
                 self.in_lightning = False
                 return False
-        
-        rand_num = random.random()
-        
-        if rand_num < proba:
-            self.in_lightning = True
-            self.lightning_start_time = time.time()
-            self.lightning_duration = random.uniform(0.2,1.2)
-            print(f"lightning - duration : {round(self.lightning_duration,1)}s")
-            return True
-        else:
-            self.in_lightning = False
-            return False
     
     def lightning(self, screen=pygame.surface.Surface):
+        """Display a lightning bolt on the screen according 
+        to the return from self.lightning_dice()
+
+        Args:
+            screen: The main Pygame surface where to draw
+        """        
         if self.lightning_dice():
             screen.blit(self.img, (0,0))
         
@@ -347,6 +405,7 @@ class MakeItRain():
     
     def rain(self):
         """Shows rain animation on screen"""
+        
         global strong_wind_soung_played
         
         if not sounds.in_playing("rain"):
@@ -383,4 +442,5 @@ class MakeItRain():
                 raindrop['y'] = 0
                 raindrop['x'] = random.randint(0, self.WIDTH)
         
+        # Probability roll for the display of lightning
         thunder.lightning(self.screen)
