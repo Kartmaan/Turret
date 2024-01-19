@@ -4,3 +4,6 @@
 /assets/images/sprites/anim/steam/gdraw
 /assets/images/sprites/anim/blast/gdraw
 /documentation/gdraw
+
+/__pycache__
+/functions/pycache
