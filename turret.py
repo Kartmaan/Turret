@@ -2,7 +2,7 @@ import sys
 from functions.display import Mobs, TurretSprites, pygame, laser
 from functions.display import background, turret_base_sprite, debug_mode
 from functions.geometry import ref_points, detection
-from functions.animation import Rotation, MakeItRain, rotate_turret
+from functions.animation import Rotation, MakeItRain, RotateTurret, get_sounds
 from functions.sound import MusicManager
 
 # Pygame initialisation
@@ -19,6 +19,8 @@ turrets = TurretSprites()
 mobs = Mobs()
 rainfall = MakeItRain(screen)
 music = MusicManager()
+sounds = get_sounds()
+turret_rotation = RotateTurret()
 
 debug = False
 rain = True
@@ -73,7 +75,8 @@ while True:
     screen.blit(mob['image'], mob['rect'])
   
   # Rotates the turret by one angle value
-  rotate_turret(screen, turrets, rotation, mobs, refs)
+  #rotate_turret(screen, turrets, rotation, mobs, refs)
+  turret_rotation.rotate(screen, turrets, rotation, mobs, refs)
   
   # Displays the laser segment and returns the coordinates 
   # of its ends
@@ -107,7 +110,7 @@ while True:
   # Displaying debug mode
   if debug:
     debug_mode(screen, refs, turret_base_rect, 
-                rotation, mobs, clock)
+                rotation, mobs, sounds, clock)
   
   # Display upadate
   pygame.display.flip()

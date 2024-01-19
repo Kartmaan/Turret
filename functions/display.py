@@ -12,7 +12,9 @@ import pygame
 import random
 import os
 from functions.geometry import get_distance
+from functions.animation import get_sounds
 
+sounds = get_sounds()
 class Mobs():
     """Class generating mobs, make them appear 
     on the screen when you click and make them disappear when 
@@ -157,6 +159,8 @@ class Mobs():
         # 3) The mob must not be too close to another mob
         if (len(self.living_mobs) < self.max_living_mobs and not 
             close_to_base and not close_to_mob):
+            if not sounds.in_playing("spawn"):
+                sounds.play_sound("spawn")
             mob = self.mobs_gen()
             pos_x, pos_y = pos
             dist = get_distance(refs["cannon"], (pos_x, pos_y))
@@ -270,7 +274,7 @@ def turret_base_sprite(coef:float = 0.5) -> pygame.surface.Surface:
 
 def debug_mode(screen:pygame.surface.Surface, refs:dict,
                turret_base:pygame.rect.Rect, rotationObject, 
-               mobsObject, clock:pygame.time.Clock):
+               mobsObject, soundsObject, clock:pygame.time.Clock):
     """Shows on-screen information about animation states.
     Like highlighting reference points
 

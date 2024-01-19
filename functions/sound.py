@@ -22,7 +22,9 @@ class SoundManager():
         self.paths = {
             "sentinel" : "assets/sound/sentinel.ogg",
             "alert" : "assets/sound/alert.ogg",
-            "deploy" : "assets/sound/deploy.wav",
+            "deploy" : "assets/sound/deploy.ogg",
+            "retract" : "assets/sound/retract.ogg",
+            "spawn" : "assets/sound/spawn.ogg",
             "steam" : "assets/sound/steam.ogg",
             "fire" : "assets/sound/fire.wav",
             "destroy" : "assets/sound/destroy.mp3",
@@ -35,7 +37,7 @@ class SoundManager():
         self.sound_adjust = {
             "sentinel" : 0.44,
             "alert" : 0.33,
-            "deploy" : 0.15,
+            "deploy" : 0.33,
             "rain" : 0.55,
             "wind" : 0.80,
             "strong_wind" : 0.85

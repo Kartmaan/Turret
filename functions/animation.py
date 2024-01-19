@@ -15,9 +15,11 @@ sounds = SoundManager()
 # these variables will make it possible to ensure it. It will be 
 # uncremented by 1 when the event takes place and reset to 0 at 
 # the exit of the event
-deploy_sound_played = 0
 bang_sound_played  = 0
 strong_wind_soung_played = 0
+
+def get_sounds(soundManagerObject=sounds):
+    return soundManagerObject
 
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
@@ -129,6 +131,9 @@ class SteamAnimation(pygame.sprite.Sprite):
             self.steam_played += 1   
         self.image = self.sprites[int(self.current_sprite)]
 
+steam_sprites = pygame.sprite.Group()
+steam_anim = SteamAnimation()
+
 class BangAnimation():
     """Projectile animation"""
     
@@ -173,8 +178,6 @@ class BangAnimation():
                 mobsObject.destroyed_mob()
                 #mobsObject.kill_mob()
 
-steam_sprites = pygame.sprite.Group()
-steam_anim = SteamAnimation()
 bang = BangAnimation()
 
 def steam_jet(screen:pygame.surface.Surface, refs:dict,
@@ -196,57 +199,75 @@ def steam_jet(screen:pygame.surface.Surface, refs:dict,
     if steam_anim.steam_played < 1:
         steam_anim.animate(anim_bool=True)
 
-def rotate_turret(screen:pygame.surface.Surface, turretObject,
-                  rotationObject, mobsObject, refs:dict):
-    """Rotates the turret
-
-    Args:
-        screen: The main surface on which to draw
-        rotationObject: Rotation object
-    """
-    global deploy_sound_played
-    global bang_sound_played    
-    WIDTH = screen.get_width()
-    HEIGHT = screen.get_height()
-    if rotationObject.mode == "sentinel":
+class RotateTurret:
+    def __init__(self):
+        self.turret_mode = None
+        self.turret_image = None
+        self.deploy_sound_played = 0
+        #self.bang_sound_played = 0
+        
+    def sentinel_mode(self, turretObject, mobsObject):
+        global bang_sound_played
+        bang_sound_played = 0
         steam_anim.steam_played = 0
         bang.vals_initialized = 0
         bang.bang_played = 0
-        bang_sound_played = 0
-        deploy_sound_played = 0
+        #self.bang_sound_played = 0
+        self.deploy_sound_played = 0
         mobsObject.in_target = None
-        deploy_played = 0
+        
         if not sounds.in_playing("sentinel"):
             sounds.play_sound("sentinel")
-        turret_image = turretObject.turret_sentinel
         
-    if rotationObject.mode == "alert":
+        self.turret_image = turretObject.turret_sentinel
+    
+    def alert_mode(self, turretObject):
         sounds.stop_sound("sentinel")
         if not sounds.in_playing("alert"):
             sounds.play_sound("alert")
-        turret_image = turretObject.turret_alert
+            
+        self.turret_image = turretObject.turret_alert
     
-    if rotationObject.mode == "fire":
+    def fire_mode(self, screen:pygame.surface.Surface, turretObject,
+                  rotationObject, mobsObject, refs:dict):
         sounds.stop_sound("alert")
         sounds.stop_sound("sentinel")
-        turret_image = turretObject.turret_fire
-        if deploy_sound_played < 1:
+        self.turret_image = turretObject.turret_fire
+        if self.deploy_sound_played < 1:
             sounds.play_sound("deploy")
-            deploy_sound_played+=1
+            self.deploy_sound_played+=1
         
         if not sounds.in_playing("deploy"):
             steam_jet(screen, refs, rotationObject)
             bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
+    
+    def rotate(self, screen:pygame.surface.Surface, turretObject,
+               rotationObject, mobsObject, refs:dict) -> None:
         
-    turret_rect = turret_image.get_rect()
-    turret_rect.center = (WIDTH//2, HEIGHT//2)
-    
-    rotated_surface = pygame.transform.rotate(turret_image, rotationObject.angle)
-    rotated_rect = rotated_surface.get_rect(center=turret_rect.center)
-    
-    screen.blit(rotated_surface, rotated_rect)
-    
-    rotationObject.rotate()
+        WIDTH = screen.get_width()
+        HEIGHT = screen.get_height()
+        
+        self.turret_mode = rotationObject.mode
+        
+        if self.turret_mode == "sentinel":
+            self.sentinel_mode(turretObject, mobsObject)
+        
+        if self.turret_mode == "alert":
+            self.alert_mode(turretObject)
+        
+        if self.turret_mode == "fire":
+            self.fire_mode(screen, turretObject, rotationObject,
+                           mobsObject, refs)
+        
+        turret_rect = self.turret_image.get_rect()
+        turret_rect.center = (WIDTH//2, HEIGHT//2)
+        
+        rotated_surface = pygame.transform.rotate(self.turret_image, rotationObject.angle)
+        rotated_rect = rotated_surface.get_rect(center=turret_rect.center)
+        
+        screen.blit(rotated_surface, rotated_rect)
+        
+        rotationObject.rotate()
 
 class Thunder():
     """Makes lightning appear and thunder heard.
@@ -307,7 +328,7 @@ class Thunder():
             else: # Deadline
                 self.in_lightning = False
                 self.after_lightning_start_time = time.time()
-                self.after_lightning_duration = random.uniform(2,4.5)
+                self.after_lightning_duration = random.uniform(1.5,3.5)
                 self.after_lightning = True
                 return False
         
@@ -342,7 +363,6 @@ class Thunder():
         if self.lightning_dice():
             screen.blit(self.img, (0,0))
         
-
 thunder = Thunder()
 
 class MakeItRain():
