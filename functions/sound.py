@@ -53,11 +53,19 @@ class SoundManager():
         pygame.mixer.set_num_channels(len(self.paths))
         self.channels = {key: pygame.mixer.Channel(i) for i, key in enumerate(self.sounds)}
 
-    def play_sound(self, sound_name):
+    def play_sound(self, sound_name:str) -> None:
         if sound_name in self.sounds and sound_name in self.channels:
             self.channels[sound_name].play(self.sounds[sound_name])
 
-    def stop_sound(self, sound_name):
+    def pause_sound(self, sound_name:str) -> None:
+        if sound_name in self.channels:
+            self.channels[sound_name].pause()
+    
+    def unpause_sound(self, sound_name:str) -> None:
+        if sound_name in self.channels:
+            self.channels[sound_name].unpause()
+    
+    def stop_sound(self, sound_name:str) -> None:
         """Stop playback of a channel immediatly
 
         Args:
@@ -66,7 +74,15 @@ class SoundManager():
         if sound_name in self.channels:
             self.channels[sound_name].stop()
     
-    def fadeout(self, sound_name:str, time:int):
+    def set_volume(self, sound_name:str, volume:float) -> None:
+        if sound_name in self.channels:
+            self.channels[sound_name].set_volume(volume)
+
+    def get_volume(self, sound_name:str) -> float:
+        if sound_name in self.channels:
+            self.channels[sound_name].get_volume()
+    
+    def fadeout(self, sound_name:str, time:int) -> None:
         """Stop playback of a channel after fading out the sound 
         over the given time argument in milliseconds
 
@@ -77,7 +93,7 @@ class SoundManager():
         if sound_name in self.channels:
             self.channels[sound_name].fadeout(time)
 
-    def in_playing(self, sound_name):
+    def in_playing(self, sound_name:str) -> bool:
         if sound_name in self.channels:
             return self.channels[sound_name].get_busy()
 
