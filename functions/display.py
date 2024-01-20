@@ -8,12 +8,14 @@ Note : The Pygame module is only imported into this module,
 the other functions refer to this import to use the pygame 
 functions
 """
-import pygame
 import random
 import os
+import time
+import pygame
 from functions.geometry import get_distance
-from functions.animation import get_sounds
+from functions.sound import SoundManager, get_sounds
 
+start_time = time.time()
 sounds = get_sounds()
 class Mobs():
     """Class generating mobs, make them appear 
@@ -196,6 +198,20 @@ class Mobs():
             if mob['pos'] == self.in_target:
                 del self.living_mobs[idx]
 
+def turret_base_sprite(coef:float = 0.47) -> pygame.surface.Surface:
+    """Loads and resizes the turret base sprite
+
+    Args:
+        coef : Reduction factor value. Defaults to 0.5.
+
+    Returns:
+        pygame.surface.Surface: _description_
+    """    
+    base_sprite = pygame.image.load("assets/images/sprites/turret_base.png").convert_alpha()
+    base_sprite = pygame.transform.smoothscale_by(base_sprite, coef)
+    
+    return base_sprite
+
 class TurretSprites():
     """Enables you to recover the surface of the turret sprite 
     which is suitable according to the different rotation modes: 
@@ -213,7 +229,7 @@ class TurretSprites():
         self.turret_alert = self.turret_sprites["turret_alert"]
         self.turret_fire = self.turret_sprites["turret_fire"]
         
-    def resize(self, coef:float = 0.67):
+    def resize(self, coef:float = 0.65):
         """Resize sprites according to a factor value (coef)
 
         Args:
@@ -258,23 +274,21 @@ def background() -> pygame.surface.Surface:
     
     return background_img
 
-def turret_base_sprite(coef:float = 0.5) -> pygame.surface.Surface:
-    """Loads and resizes the turret base sprite
+def seconds_to_hms(seconds):
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
 
-    Args:
-        coef : Reduction factor value. Defaults to 0.5.
+        # Formating
+        formatted_time = "{:02}:{:02}:{:06.3f}".format(int(hours), int(minutes), seconds)
 
-    Returns:
-        pygame.surface.Surface: _description_
-    """    
-    base_sprite = pygame.image.load("assets/images/sprites/turret_base.png").convert_alpha()
-    base_sprite = pygame.transform.smoothscale_by(base_sprite, coef)
-    
-    return base_sprite
+        return formatted_time
 
 def debug_mode(screen:pygame.surface.Surface, refs:dict,
-               turret_base:pygame.rect.Rect, rotationObject, 
-               mobsObject, soundsObject, clock:pygame.time.Clock):
+               turret_base:pygame.rect.Rect, 
+               rotationObject, mobsObject, 
+               soundsObject:SoundManager,
+               thunderObject, rainObject, 
+               clock:pygame.time.Clock) -> None:
     """Shows on-screen information about animation states.
     Like highlighting reference points
 
@@ -298,8 +312,13 @@ def debug_mode(screen:pygame.surface.Surface, refs:dict,
         
         clock : Allows you to retrieve the effective fps value
     """
+    global start_time
+    
     WIDTH = screen.get_width()
     HEIGHT = screen.get_height()
+    
+    channels_busy = soundsObject.total_in_playing()
+    duration_str = seconds_to_hms(time.time() - start_time)
     
     # Colors
     white = (255,255,255)
@@ -310,6 +329,7 @@ def debug_mode(screen:pygame.surface.Surface, refs:dict,
     # Load texts
     font = pygame.font.Font(None, 20)
     
+    duration = f"Duration : {duration_str}" 
     win_size = f"Window size : {WIDTH}x{HEIGHT}"
     fps = f"FPS : {round(clock.get_fps(), 2)}"
     turret_size = f"Turret size = {int(refs["small_side"])}x{int(refs["long_side"])}"
@@ -319,9 +339,13 @@ def debug_mode(screen:pygame.surface.Surface, refs:dict,
     max_mob = f"Maximum mobs : {mobsObject.max_living_mobs}"
     living_mobs = f"Living mobs : {len(mobsObject.living_mobs)}"
     detected_mob = f"Detected mob : {mobsObject.in_target}"
+    sounds_playing = f"Sounds playing : {channels_busy[0]}/{channels_busy[1]}"
+    strong_wind = f"Strong wind : {rainObject.strong_wind_displayed}"
+    lightning = f"Lightning : {thunderObject.lightning_displayed}"
     
-    all_text = [win_size, fps, turret_size, angle_text, turret_speed,
-                turret_mode, max_mob, living_mobs, detected_mob]
+    all_text = [duration, win_size, fps, turret_size, angle_text, 
+                turret_speed, turret_mode, max_mob, living_mobs, 
+                detected_mob, sounds_playing, strong_wind, lightning]
     
     # Displays texts
     pos_x = 20

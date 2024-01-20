@@ -7,19 +7,9 @@ different animations, such as turret rotation, rain or projectiles
 import os
 import time
 from functions.display import pygame, random
-from functions.sound import SoundManager
+from functions.sound import get_sounds
 
-sounds = SoundManager()
-
-# Some sounds should only be played once when the event occurs, 
-# these variables will make it possible to ensure it. It will be 
-# uncremented by 1 when the event takes place and reset to 0 at 
-# the exit of the event
-bang_sound_played  = 0
-strong_wind_soung_played = 0
-
-def get_sounds(soundManagerObject=sounds):
-    return soundManagerObject
+sounds = get_sounds()
 
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
@@ -51,7 +41,7 @@ class Rotation():
       self.angle += self.rotation_speed_fire
       self.current_speed = self.rotation_speed_fire
     
-  def get_angle(self):
+  def get_angle(self) -> int:
     """ Get current turret angle """
     return int(self.angle%360)
 
@@ -145,6 +135,7 @@ class BangAnimation():
         self.speed = 3
         self.bang_played = 0 # Animation
         self.vals_initialized = 0
+        self.bang_sound_played = 0 # TEST
     
     def init_vals(self, start:pygame.math.Vector2, 
              target:pygame.math.Vector2):
@@ -160,13 +151,13 @@ class BangAnimation():
     
     def animate(self, screen:pygame.surface.Surface, start:pygame.math.Vector2, 
              target:pygame.math.Vector2, mobsObject):
-        global bang_sound_played
+        #global bang_sound_played
         self.init_vals(start, target)
         
         if self.bang_played < 1:
-            if bang_sound_played < 1:
+            if bang.bang_sound_played < 1:
                 sounds.play_sound("fire")
-                bang_sound_played += 1
+                bang.bang_sound_played += 1
             self.green_val = (self.green_val + self.color_jump) % 255
             radius = random.randint(2,9)
             self.current_pos += self.move_vector * self.speed
@@ -207,12 +198,10 @@ class RotateTurret:
         #self.bang_sound_played = 0
         
     def sentinel_mode(self, turretObject, mobsObject):
-        global bang_sound_played
-        bang_sound_played = 0
+        bang.bang_sound_played = 0
         steam_anim.steam_played = 0
         bang.vals_initialized = 0
         bang.bang_played = 0
-        #self.bang_sound_played = 0
         self.deploy_sound_played = 0
         mobsObject.in_target = None
         
@@ -221,15 +210,16 @@ class RotateTurret:
         
         self.turret_image = turretObject.turret_sentinel
     
-    def alert_mode(self, turretObject):
+    def alert_mode(self, turretObject) -> None:
         sounds.stop_sound("sentinel")
         if not sounds.in_playing("alert"):
             sounds.play_sound("alert")
             
         self.turret_image = turretObject.turret_alert
     
-    def fire_mode(self, screen:pygame.surface.Surface, turretObject,
-                  rotationObject, mobsObject, refs:dict):
+    def fire_mode(self, screen:pygame.surface.Surface, 
+                  turretObject, rotationObject:Rotation, 
+                  mobsObject, refs:dict) -> None: 
         sounds.stop_sound("alert")
         sounds.stop_sound("sentinel")
         self.turret_image = turretObject.turret_fire
@@ -241,8 +231,9 @@ class RotateTurret:
             steam_jet(screen, refs, rotationObject)
             bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
     
-    def rotate(self, screen:pygame.surface.Surface, turretObject,
-               rotationObject, mobsObject, refs:dict) -> None:
+    def rotate(self, screen:pygame.surface.Surface, 
+               turretObject,rotationObject:Rotation, 
+               mobsObject, refs:dict) -> None:
         
         WIDTH = screen.get_width()
         HEIGHT = screen.get_height()
@@ -283,6 +274,7 @@ class Thunder():
         self.in_lightning = False
         self.lightning_start_time = None
         self.lightning_duration = None
+        self.lightning_displayed = 0
         
         self.after_lightning = False
         self.after_lightning_start_time = None
@@ -342,10 +334,10 @@ class Thunder():
             # The probability is realized, the state variable 
             # self.in_lightning is set to True
             if rand_num < proba: # The probability is realized
+                self.lightning_displayed += 1
                 self.in_lightning = True
                 self.lightning_start_time = time.time()
                 self.lightning_duration = random.uniform(0.2,1.2)
-                print(f"lightning - duration : {round(self.lightning_duration,1)}s")
                 return True
             
             # The probability isn't realized. No lightning
@@ -353,7 +345,7 @@ class Thunder():
                 self.in_lightning = False
                 return False
     
-    def lightning(self, screen=pygame.surface.Surface):
+    def lightning(self, screen=pygame.surface.Surface) -> None:
         """Display a lightning bolt on the screen according 
         to the return from self.lightning_dice()
 
@@ -364,6 +356,9 @@ class Thunder():
             screen.blit(self.img, (0,0))
         
 thunder = Thunder()
+
+def get_thunder():
+    return thunder
 
 class MakeItRain():
     """Shows the rain animation on the screen as well as the 
@@ -377,6 +372,8 @@ class MakeItRain():
         self.raindrop_intensity = 40 # Raindrops on screen
         self.in_wind = False # Wind animation in progress
         self.wind_start_time = None
+        self.strong_wind_sound_played = 0
+        self.strong_wind_displayed = 0
     
     def generate_raindrop(self) -> dict:
         """Generates the coordinates of a raindrop in a dict"""
@@ -415,7 +412,7 @@ class MakeItRain():
         proba = probability / 100
         rand_num = random.random()
         if rand_num < proba:
-            print(f"wind - duration : {wind_duration}s")
+            self.strong_wind_displayed += 1
             self.in_wind = True
             self.wind_start_time = time.time()
             return True
@@ -423,10 +420,10 @@ class MakeItRain():
             self.in_wind = False
             return False
     
-    def rain(self):
+    def rain(self) -> None:
         """Shows rain animation on screen"""
         
-        global strong_wind_soung_played
+        #global strong_wind_soung_played
         
         if not sounds.in_playing("rain"):
             sounds.play_sound("rain")
@@ -442,16 +439,16 @@ class MakeItRain():
         # Drawing raindrops
         for raindrop in raindrops:
             if not self.wind_dice(): # No wind
-                strong_wind_soung_played = 0
+                self.strong_wind_soung_played = 0
                 sounds.fadeout("strong_wind", 1000)
                 pygame.draw.line(self.screen, self.raindrop_color,
                         (raindrop['x'], raindrop['y']),
                         (raindrop['x'], raindrop['y'] + raindrop_length), 1)
             
             else: # Wind
-                if not sounds.in_playing("strong_wind") and strong_wind_soung_played < 1:
+                if not sounds.in_playing("strong_wind") and self.strong_wind_soung_played < 1:
                     sounds.play_sound("strong_wind")
-                    strong_wind_soung_played += 1
+                    self.strong_wind_soung_played += 1
                 pygame.draw.line(self.screen, self.raindrop_color,
                         (raindrop['x'], raindrop['y']),
                         (raindrop['x'] - raindrop_length, raindrop['y'] + raindrop_length), 1)

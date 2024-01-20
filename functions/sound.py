@@ -98,6 +98,18 @@ class SoundManager():
     def in_playing(self, sound_name:str) -> bool:
         if sound_name in self.channels:
             return self.channels[sound_name].get_busy()
+    
+    def total_in_playing(self) -> tuple:
+        num = 0
+        for channel in self.channels.values():
+            if channel.get_busy():
+                num+=1
+        
+        return num, len(self.channels)
+
+sounds = SoundManager()
+def get_sounds(soundManagerObject:SoundManager = sounds) -> SoundManager:
+    return soundManagerObject
 
 class MusicManager():
     """Class for loading, playing and pausing background music"""
@@ -111,3 +123,6 @@ class MusicManager():
     
     def pause_music(self):
         pygame.mixer.music.pause()
+    
+    def unpause_music(self):
+        pygame.mixer.music.unpause()

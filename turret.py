@@ -2,7 +2,8 @@ import sys
 from functions.display import Mobs, TurretSprites, pygame, laser
 from functions.display import background, turret_base_sprite, debug_mode
 from functions.geometry import ref_points, detection
-from functions.animation import Rotation, MakeItRain, RotateTurret, get_sounds
+from functions.animation import Rotation, MakeItRain, RotateTurret
+from functions.animation import get_sounds, get_thunder
 from functions.sound import MusicManager
 
 # Pygame initialisation
@@ -20,6 +21,7 @@ mobs = Mobs()
 rainfall = MakeItRain(screen)
 music = MusicManager()
 sounds = get_sounds()
+thunder = get_thunder()
 turret_rotation = RotateTurret()
 
 debug = False
@@ -110,7 +112,8 @@ while True:
   # Displaying debug mode
   if debug:
     debug_mode(screen, refs, turret_base_rect, 
-                rotation, mobs, sounds, clock)
+                rotation, mobs, sounds, thunder,
+                rainfall, clock)
   
   # Display upadate
   pygame.display.flip()
