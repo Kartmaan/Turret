@@ -1,12 +1,11 @@
 # Auto Turret
-A mini-game allowing the player to place mobs so that the turret can detect and 
+A mini-game made with Pygame allowing the player to place mobs so that the turret can detect and 
 destroy them with a projectile
 
 https://github.com/Kartmaan/Turret/assets/11463619/4a3c4fba-6ce1-42ef-98fc-e2a97019ce7c
 
 # Features
 - Random appearance of a mob when left clicking among 4 possible
-- 6 animation classes
 - A sound design composed of 12 sounds played during different events and an ambient music
 - Presence of rain with the effects of strong wind on it, which happens randomly
 - Random appearance of lightning followed by thunder sound
