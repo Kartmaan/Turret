@@ -6,10 +6,12 @@ different animations, such as turret rotation, rain or projectiles
 """
 import os
 import time
-from functions.display import pygame, random
+from functions.geometry import np, get_distance, midpoint
+from functions.display import pygame, random, get_mobs
 from functions.sound import get_sounds
 
 sounds = get_sounds()
+mobs = get_mobs()
 
 class Rotation():
   """ The positions and angular velocities of the turret are crucial 
@@ -34,19 +36,34 @@ class Rotation():
     if self.mode == "sentinel": # Search for targets
       self.angle += self.rotation_speed_sentinel
       self.current_speed = self.rotation_speed_sentinel
+      
     if self.mode == "alert": # Target found
       self.angle += self.rotation_speed_alert
       self.current_speed = self.rotation_speed_alert
+      
     if self.mode == "fire": # Ready to fire
       self.angle += self.rotation_speed_fire
       self.current_speed = self.rotation_speed_fire
+    
+    if self.mode == "retract": # Ready to retract
+        self.angle += self.rotation_speed_fire
+        self.current_speed = self.rotation_speed_fire
     
   def get_angle(self) -> int:
     """ Get current turret angle """
     return int(self.angle%360)
 
+rotation = Rotation()
+
+def get_rotation():
+    return rotation
+
+# ---------- <WORK IN PROGRESS> ----------
 class SteamAnimation(pygame.sprite.Sprite):
-    """ Animation of the steam jet """
+    """ WORK IN PROGRESS - NOT YET USED
+    TODO : Correctly position the sprites according to the rotations
+    from refs["steam_origin] to refs["steam_end"]. 
+    Animation of the steam jet """
     def __init__(self):
         super().__init__()
         self.folder = "assets/images/sprites/anim/steam"
@@ -56,10 +73,13 @@ class SteamAnimation(pygame.sprite.Sprite):
         self.steam_played = 0
         self.sprites = []
         
+        self.debug_print = 0
+        
         for i in range(0,self.number_of_sprites):
             path = self.folder + f"/steam_{i}.png"
             img = pygame.image.load(path)
             img = pygame.transform.smoothscale_by(img, 0.5)
+            #img = pygame.transform.rotate(img, 90)
             self.sprites.append(img)
         
         self.current_sprite = 0
@@ -89,16 +109,26 @@ class SteamAnimation(pygame.sprite.Sprite):
     
     def arrange(self, refs:dict, rotationObject):
         """ Adapts the size and rotation of sprites based 
-        on reference points 
-        TODO : Arranger l'orientation du sprite selon les 
-        coordonnées 'steam_origin' et 'steam_end' """
+        on reference points"""
+        sprite_rect = self.sprites[1].get_rect()
         self.sprites = []
-        self.rect.center = refs["steam_end"]
+        origin = refs["steam_origin"]
+        end = refs["steam_end"]
+        
+        angle_rad = np.arctan2(end.y - origin.y, end.x - origin.x)
+        angle_rad = np.degrees(angle_rad)
+        
+        distance = get_distance(origin, end)
+        
+        rect = pygame.Rect(0, 0, sprite_rect.width,  distance)
+        rect.center = midpoint(origin, end)
+        
         for i in range(0,self.number_of_sprites):
             path = self.folder + f"/steam_{i}.png"
             img = pygame.image.load(path)
             img = pygame.transform.smoothscale_by(img, 0.5)
-            #img = pygame.transform.rotate(img, rotationObject.angle)
+            img = pygame.transform.rotate(img, -angle_rad)
+            rotated_rect = img.get_rect(center=rect.center)
             self.sprites.append(img)
             
     def animate(self, anim_bool:bool = True):
@@ -110,8 +140,6 @@ class SteamAnimation(pygame.sprite.Sprite):
         self.in_animation = anim_bool
     
     def update(self, refs:dict, speed:float = 0.15):
-        """ TODO :  Changer la position des sprites 
-        en fonction des points référentiels refs["steam_origin"]"""
         self.rect.center = refs["steam_origin"]
         if self.in_animation == True:
             self.current_sprite += speed
@@ -121,59 +149,14 @@ class SteamAnimation(pygame.sprite.Sprite):
             self.steam_played += 1   
         self.image = self.sprites[int(self.current_sprite)]
 
+# WORK IN PROGRESS - NOT YET USED
 steam_sprites = pygame.sprite.Group()
 steam_anim = SteamAnimation()
 
-class BangAnimation():
-    """Projectile animation"""
-    
-    def __init__(self):
-        self.start_point = None
-        self.target_point = None
-        self.current_pos = None
-        self.move_vector = None
-        self.speed = 3
-        self.bang_played = 0 # Animation
-        self.vals_initialized = 0
-        self.bang_sound_played = 0 # TEST
-    
-    def init_vals(self, start:pygame.math.Vector2, 
-             target:pygame.math.Vector2):
-        if self.vals_initialized < 1:
-            self.start_point = start
-            self.target_point = target
-            self.current_pos = self.start_point
-            self.move_vector = self.target_point - self.start_point
-            self.move_vector.normalize_ip()
-            self.vals_initialized = 1
-            self.green_val = 200
-            self.color_jump = 20
-    
-    def animate(self, screen:pygame.surface.Surface, start:pygame.math.Vector2, 
-             target:pygame.math.Vector2, mobsObject):
-        #global bang_sound_played
-        self.init_vals(start, target)
-        
-        if self.bang_played < 1:
-            if bang.bang_sound_played < 1:
-                sounds.play_sound("fire")
-                bang.bang_sound_played += 1
-            self.green_val = (self.green_val + self.color_jump) % 255
-            radius = random.randint(2,9)
-            self.current_pos += self.move_vector * self.speed
-            pygame.draw.circle(screen, (255,self.green_val,0), (int(self.current_pos.x), 
-                int(self.current_pos.y)), radius)
-
-            if self.current_pos.distance_to(self.target_point) < 5:
-                self.bang_played = 1
-                mobsObject.destroyed_mob()
-                #mobsObject.kill_mob()
-
-bang = BangAnimation()
-
 def steam_jet(screen:pygame.surface.Surface, refs:dict,
               rotationObject):
-    """Runs the steam jet animation
+    """ WORK IN PROGRESS - NOT YET USED
+    Runs the steam jet animation
 
     Args:
         screen : The main surface on which to draw
@@ -189,15 +172,137 @@ def steam_jet(screen:pygame.surface.Surface, refs:dict,
     
     if steam_anim.steam_played < 1:
         steam_anim.animate(anim_bool=True)
+# ---------- </WORK IN PROGRESS> ----------
+
+class Blast(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        
+        self.folder = "assets/images/sprites/anim/blast"
+        self.nb_of_sprites = self.how_many_sprites(self.folder)
+        
+        self.images = []
+        self.blast_played = 0
+        self.blast_sound_played = 0
+        self.target_hit = False
+        
+        for num in range(1, self.nb_of_sprites+1):
+            img = pygame.image.load(f"assets/images/sprites/anim/blast/blast_{num}.png")
+            img = pygame.transform.smoothscale_by(img, 0.2)
+            self.images.append(img)
+        
+        self.index = 0
+        self.image = self.images[self.index]
+        self.rect = self.image.get_rect()
+        self.counter = 0
+    
+    def arrange(self, pos:tuple):
+        self.rect.center = pos
+    
+    def update(self):
+        explosion_speed = 5
+        self.counter += 1
+
+        if self.counter >= explosion_speed and self.index < len(self.images) - 1:
+            self.counter = 0
+            self.index += 1
+            self.image = self.images[self.index]
+        
+        if self.index >= len(self.images) - 1 and self.counter >= explosion_speed:
+            self.kill()
+            mobs.kill_mob()
+            self.index = 0
+            self.counter = 0
+            self.blast_played += 1
+    
+    def how_many_sprites(self, folder:str) -> int:
+        """Determines how many .png files are in the folder
+
+        Args:
+            folder : Path of the folder containing the sprites
+
+        Returns:
+            int: Number of sprites contained in the folder
+        """        
+        number_of_files = 0
+
+        for file in os.listdir(folder):
+            extension = os.path.splitext(file)[1]
+
+            if extension == ".png":
+                number_of_files += 1
+        
+        return number_of_files
+
+blast_group = pygame.sprite.Group()        
+blast_anim = Blast()
+
+def blast_launcher(screen:pygame.surface.Surface):
+    blast_anim.arrange(mobs.in_target)
+    blast_group.draw(screen)
+    blast_group.update()
+    blast_group.add(blast_anim)
+
+class BangAnimation():
+    """Projectile animation"""
+    
+    def __init__(self):
+        self.start_point = None
+        self.target_point = None
+        self.current_pos = None
+        self.move_vector = None
+        self.speed = 3
+        self.bang_played = 0 # Animation
+        self.vals_initialized = 0
+        self.bang_sound_played = 0
+        self.retract_sound_palayed = 0
+    
+    def init_vals(self, start:pygame.math.Vector2, 
+             target:pygame.math.Vector2):
+        if self.vals_initialized < 1:
+            self.start_point = start
+            self.target_point = target
+            self.current_pos = self.start_point
+            self.move_vector = self.target_point - self.start_point
+            self.move_vector.normalize_ip()
+            self.vals_initialized = 1
+            self.green_val = 200
+            self.color_jump = 20
+    
+    def animate(self, screen:pygame.surface.Surface, start:pygame.math.Vector2, 
+             target:pygame.math.Vector2, mobsObject):
+        self.init_vals(start, target)
+        
+        if self.bang_played < 1:
+            if bang.bang_sound_played < 1:
+                sounds.play_sound("fire")
+                bang.bang_sound_played += 1
+            self.green_val = (self.green_val + self.color_jump) % 255
+            radius = random.randint(2,9)
+            self.current_pos += self.move_vector * self.speed
+            pygame.draw.circle(screen, (255,self.green_val,0), (int(self.current_pos.x), 
+                int(self.current_pos.y)), radius)
+
+            if self.current_pos.distance_to(self.target_point) < 5:
+                self.bang_played = 1
+                mobsObject.destroyed_mob()
+                blast_anim.target_hit = True
+                if not sounds.in_playing("blast"):
+                    sounds.play_sound("blast")
+                    blast_anim.blast_sound_played+=1
+
+bang = BangAnimation()
 
 class RotateTurret:
     def __init__(self):
         self.turret_mode = None
         self.turret_image = None
         self.deploy_sound_played = 0
-        #self.bang_sound_played = 0
         
     def sentinel_mode(self, turretObject, mobsObject):
+        blast_anim.target_hit = False
+        blast_anim.blast_played = 0
+        blast_anim.blast_sound_played = 0
         bang.bang_sound_played = 0
         steam_anim.steam_played = 0
         bang.vals_initialized = 0
@@ -218,8 +323,7 @@ class RotateTurret:
         self.turret_image = turretObject.turret_alert
     
     def fire_mode(self, screen:pygame.surface.Surface, 
-                  turretObject, rotationObject:Rotation, 
-                  mobsObject, refs:dict) -> None: 
+                  turretObject, mobsObject, refs:dict) -> None: 
         sounds.stop_sound("alert")
         sounds.stop_sound("sentinel")
         self.turret_image = turretObject.turret_fire
@@ -228,9 +332,12 @@ class RotateTurret:
             self.deploy_sound_played+=1
         
         if not sounds.in_playing("deploy"):
-            steam_jet(screen, refs, rotationObject)
+            #steam_jet(screen, refs, rotationObject)
             bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
-    
+
+        if blast_anim.target_hit and blast_anim.blast_played < 1:
+            blast_launcher(screen)
+        
     def rotate(self, screen:pygame.surface.Surface, 
                turretObject,rotationObject:Rotation, 
                mobsObject, refs:dict) -> None:
@@ -247,7 +354,7 @@ class RotateTurret:
             self.alert_mode(turretObject)
         
         if self.turret_mode == "fire":
-            self.fire_mode(screen, turretObject, rotationObject,
+            self.fire_mode(screen, turretObject,
                            mobsObject, refs)
         
         turret_rect = self.turret_image.get_rect()

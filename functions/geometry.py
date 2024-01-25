@@ -140,7 +140,7 @@ def ref_points(screen:pygame.surface.Surface, rect: pygame.rect.Rect,
     steam_right_alignment = midpoint(top_right, bottom_right, offset=10)
     steam_left_alignment = midpoint(top_left, bottom_left, offset=10)
     steam_origin = midpoint(steam_left_alignment, steam_right_alignment, offset=40)
-    steam_end = steam_origin+pygame.math.Vector2(100,0).rotate(-angle)
+    steam_end = steam_origin+pygame.math.Vector2(250,0).rotate(-angle)
     
     refs = {
         # Turret rect referentials

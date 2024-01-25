@@ -198,6 +198,10 @@ class Mobs():
             if mob['pos'] == self.in_target:
                 del self.living_mobs[idx]
 
+mobs = Mobs()
+def get_mobs():
+    return mobs
+
 def turret_base_sprite(coef:float = 0.47) -> pygame.surface.Surface:
     """Loads and resizes the turret base sprite
 

@@ -1,8 +1,8 @@
 import sys
-from functions.display import Mobs, TurretSprites, pygame, laser
+from functions.display import TurretSprites, pygame, laser, get_mobs
 from functions.display import background, turret_base_sprite, debug_mode
 from functions.geometry import ref_points, detection
-from functions.animation import Rotation, MakeItRain, RotateTurret
+from functions.animation import MakeItRain, RotateTurret, get_rotation
 from functions.animation import get_sounds, get_thunder
 from functions.sound import MusicManager
 
@@ -15,9 +15,9 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
 # Classes
-rotation = Rotation()
+rotation = get_rotation()
 turrets = TurretSprites()
-mobs = Mobs()
+mobs = get_mobs()
 rainfall = MakeItRain(screen)
 music = MusicManager()
 sounds = get_sounds()
@@ -61,7 +61,7 @@ while True:
         mobs.add_mob(screen, pygame.mouse.get_pos(), turret_base, refs)
       # RIGHT CLICK
       if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-        mobs.kill_mob()
+        pass
   
   # Erase screen
   screen.fill((25, 25, 25))
@@ -77,7 +77,6 @@ while True:
     screen.blit(mob['image'], mob['rect'])
   
   # Rotates the turret by one angle value
-  #rotate_turret(screen, turrets, rotation, mobs, refs)
   turret_rotation.rotate(screen, turrets, rotation, mobs, refs)
   
   # Displays the laser segment and returns the coordinates 
@@ -94,7 +93,7 @@ while True:
     rainfall.rain()
   
   # No mobs intersected by the laser segment
-  if laser_detect == None:
+  if laser_detect == None and rotation.mode != "retract":
     rotation.mode="sentinel"
   
   # Mob intersected by the laser segment
@@ -105,6 +104,10 @@ while True:
   # (segment visible only in debug mode)
   cannon_detect = detection(refs["cannon"], refs["target"], mobs.living_mobs)
   # Mob intersected by the cannon segment
+  
+  if cannon_detect == None and rotation.mode == "retract":
+    mobs.in_target = None
+  
   if cannon_detect != None:
     rotation.mode="fire"
     mobs.in_target = cannon_detect
