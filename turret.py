@@ -10,7 +10,8 @@ from functions.sound import MusicManager
 pygame.init()
 
 # Main surface initialisation
-WIDTH, HEIGHT = 1200, 800
+# Support for resolution changes will be added in a future release 
+WIDTH, HEIGHT = 1200, 800 # DEFAULT : 1200, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Turret")
 
@@ -24,9 +25,9 @@ sounds = get_sounds()
 thunder = get_thunder()
 turret_rotation = RotateTurret()
 
-debug = False
-rain = True
-music_on = True
+debug = True
+rain = False
+music_on = False
 clock = pygame.time.Clock()
 fps = 60
 

@@ -45,6 +45,7 @@ class Rotation():
       self.angle += self.rotation_speed_fire
       self.current_speed = self.rotation_speed_fire
     
+    # WORK IN PROGRESS
     if self.mode == "retract": # Ready to retract
         self.angle += self.rotation_speed_fire
         self.current_speed = self.rotation_speed_fire
@@ -56,6 +57,7 @@ class Rotation():
 rotation = Rotation()
 
 def get_rotation():
+    """ Allows other modules to retrieve the rotation object """
     return rotation
 
 # ---------- <WORK IN PROGRESS> ----------
@@ -175,6 +177,8 @@ def steam_jet(screen:pygame.surface.Surface, refs:dict,
 # ---------- </WORK IN PROGRESS> ----------
 
 class Blast(pygame.sprite.Sprite):
+    """ Blast animation """
+    
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         
@@ -182,8 +186,8 @@ class Blast(pygame.sprite.Sprite):
         self.nb_of_sprites = self.how_many_sprites(self.folder)
         
         self.images = []
-        self.blast_played = 0
-        self.blast_sound_played = 0
+        self.blast_played = 0 # Animation counter
+        self.blast_sound_played = 0 # Sound counter
         self.target_hit = False
         
         for num in range(1, self.nb_of_sprites+1):
@@ -196,7 +200,14 @@ class Blast(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.counter = 0
     
-    def arrange(self, pos:tuple):
+    def positioning(self, pos:tuple):
+        """Place the center of the explosion at the coordinates 
+        of the currently targeted mob
+
+        Args:
+            pos: Coordinates of the center of the explosion
+            (tuple or Vector2)
+        """        
         self.rect.center = pos
     
     def update(self):
@@ -238,12 +249,22 @@ blast_group = pygame.sprite.Group()
 blast_anim = Blast()
 
 def blast_launcher(screen:pygame.surface.Surface):
-    blast_anim.arrange(mobs.in_target)
+    """Launching the blast animation.
+    
+    The animation is only launched at the precise moment when 
+    the projectile comes into contact with the targeted mob. 
+    The function is called in the fire_mode() function of 
+    the RotateTurret class.
+
+    Args:
+        screen: Main Pygame surface
+    """    
+    blast_anim.positioning(mobs.in_target)
     blast_group.draw(screen)
     blast_group.update()
     blast_group.add(blast_anim)
 
-class BangAnimation():
+class Projectile():
     """Projectile animation"""
     
     def __init__(self):
@@ -252,101 +273,217 @@ class BangAnimation():
         self.current_pos = None
         self.move_vector = None
         self.speed = 3
-        self.bang_played = 0 # Animation
-        self.vals_initialized = 0
-        self.bang_sound_played = 0
-        self.retract_sound_palayed = 0
+        self.bang_played = 0 # Animation counter
+        self.bang_sound_played = 0 # Sound counter
+        self.vals_initialized = 0 # Process counter
+        self.retract_sound_palayed = 0 # WORK IN PROGRESS 
     
     def init_vals(self, start:pygame.math.Vector2, 
              target:pygame.math.Vector2):
+        """Sets constructor attribute values, like the starting 
+        and ending point of the projectile as well as calculating 
+        the direction vector
+
+        Args:
+            start: Projectile starting point coordinates
+            target: Projectile target point coordinates
+        """
+        # Since this function will be called in a local loop of 
+        # the program (the fire_mode function of the RotateTurret 
+        # class), we ensure that the values are only initialized 
+        # once
         if self.vals_initialized < 1:
             self.start_point = start
             self.target_point = target
             self.current_pos = self.start_point
             self.move_vector = self.target_point - self.start_point
+            
+            # The magnitude of the vector is normalized to 1 
+            # because we are only interested in the direction.
             self.move_vector.normalize_ip()
+            
             self.vals_initialized = 1
+            
+            # The green value of the projectile's RGB varies in 
+            # color_jump steps during the animation
             self.green_val = 200
             self.color_jump = 20
     
     def animate(self, screen:pygame.surface.Surface, start:pygame.math.Vector2, 
              target:pygame.math.Vector2, mobsObject):
+        """Start of projectile animation
+
+        Args:
+            screen: Main Pygame surface
+            start: Projectile starting point coordinates
+            target: Projectile target point coordinates
+            mobsObject: Mobs object
+        """
+
+        # Initialization of the values necessary for establishing 
+        # the trajectory
         self.init_vals(start, target)
         
         if self.bang_played < 1:
-            if bang.bang_sound_played < 1:
+            # Play sound
+            if projectile.bang_sound_played < 1:
                 sounds.play_sound("fire")
-                bang.bang_sound_played += 1
+                projectile.bang_sound_played += 1
+                
+            # We vary the green value and set random values to 
+            # the projectile radius to add a flame effect
             self.green_val = (self.green_val + self.color_jump) % 255
             radius = random.randint(2,9)
+            
+            # Movement of the projectile according to the defined 
+            # vector and speed
             self.current_pos += self.move_vector * self.speed
+            
+            # Projectile display
             pygame.draw.circle(screen, (255,self.green_val,0), (int(self.current_pos.x), 
                 int(self.current_pos.y)), radius)
 
+            # The projectile has reached its destination, we add a 
+            # proximity margin to ensure that the point will not 
+            # be skipped
             if self.current_pos.distance_to(self.target_point) < 5:
-                self.bang_played = 1
+                self.bang_played = 1 # Animation counter
+                
+                # The targeted projectile is transformed into 
+                # debris so that the turret remains aligned until 
+                # the explosion animation ends
                 mobsObject.destroyed_mob()
+                
+                # Signal sent to the Blast class object to let it 
+                # know that the explosion can take place. The 
+                # fire_mode() function of the Rotate Turret class 
+                # will be responsible for launching it
                 blast_anim.target_hit = True
+                
+                # Play blast sound
                 if not sounds.in_playing("blast"):
                     sounds.play_sound("blast")
                     blast_anim.blast_sound_played+=1
 
-bang = BangAnimation()
+projectile = Projectile()
 
 class RotateTurret:
+    """Turns the turret according to the different rotation modes 
+    (sentinel, alert, fire). These modes are defined by the 
+    Rotation class"""
+    
     def __init__(self):
         self.turret_mode = None
         self.turret_image = None
         self.deploy_sound_played = 0
+    
+    def reset_states(self):
+        """Reset all state variables when resuming sentinel mode"""
         
-    def sentinel_mode(self, turretObject, mobsObject):
+        # Blast class
         blast_anim.target_hit = False
         blast_anim.blast_played = 0
         blast_anim.blast_sound_played = 0
-        bang.bang_sound_played = 0
-        steam_anim.steam_played = 0
-        bang.vals_initialized = 0
-        bang.bang_played = 0
-        self.deploy_sound_played = 0
-        mobsObject.in_target = None
         
+        # Projectile class
+        projectile.bang_sound_played = 0
+        projectile.vals_initialized = 0
+        projectile.bang_played = 0
+        
+        self.deploy_sound_played = 0
+        steam_anim.steam_played = 0 # WORK IN PROGRESS
+        
+    def sentinel_mode(self, turretObject, mobsObject):
+        """The turret is searching for a target
+
+        Args:
+            turretObject: TurretSprites object (from display module)
+            mobsObject: Mobs object (from display module)
+        """
+        self.reset_states() # Resetting all state variables
+        mobsObject.in_target = None # No target 
+        
+        # Play sentinel sound
         if not sounds.in_playing("sentinel"):
             sounds.play_sound("sentinel")
         
+        # Set turret sprite
         self.turret_image = turretObject.turret_sentinel
     
     def alert_mode(self, turretObject) -> None:
-        sounds.stop_sound("sentinel")
+        """The turret laser has detected a mob
+
+        Args:
+            turretObject: TurretSprites object (from display module)
+        """        
+        sounds.stop_sound("sentinel") # Stop sentinel sound
+        
+        # Play alert sound
         if not sounds.in_playing("alert"):
             sounds.play_sound("alert")
-            
+        
+        # Set turret sprite
         self.turret_image = turretObject.turret_alert
     
     def fire_mode(self, screen:pygame.surface.Surface, 
-                  turretObject, mobsObject, refs:dict) -> None: 
+                  turretObject, mobsObject, refs:dict) -> None:
+        """The turret cannon is aligned with the mob.
+        
+        The Rotation class sets the fire mode rotation speed 
+        to 0.0, i.e. the turret is stationary. This mode launches 
+        the projectile animation as well as the blast animation
+
+        Args:
+            screen: Main Pygame surface
+            turretObject: TurretSprites object (from display module)
+            mobsObject : Mobs object (from display module) 
+            refs (dict): All referential points
+        """
+        # Sounds to stop
         sounds.stop_sound("alert")
         sounds.stop_sound("sentinel")
+        
+        # Set turret sprite
         self.turret_image = turretObject.turret_fire
+        
+        # Play deploy sound
         if self.deploy_sound_played < 1:
             sounds.play_sound("deploy")
             self.deploy_sound_played+=1
         
+        # When the sound deploy is finished, the projectile 
+        # animation is started
         if not sounds.in_playing("deploy"):
-            #steam_jet(screen, refs, rotationObject)
-            bang.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
+            #steam_jet(screen, refs, rotationObject) # WIP
+            projectile.animate(screen, refs["cannon"], mobsObject.in_target, mobsObject)
 
+        # The projectile has reached the coordinates of the mob, 
+        # the blast animation can be started
         if blast_anim.target_hit and blast_anim.blast_played < 1:
             blast_launcher(screen)
         
     def rotate(self, screen:pygame.surface.Surface, 
                turretObject,rotationObject:Rotation, 
                mobsObject, refs:dict) -> None:
+        """Rotates the turret according to the angle and speed 
+        determined by the Rotation class
+
+        Args:
+            screen: Main Pygame surface
+            turretObject: TurretSprites object (from display module)
+            rotationObject: Rotation object
+            mobsObject: Mobs object (from display module)
+            refs: All referential points
+        """        
         
+        # Get the main surface size
         WIDTH = screen.get_width()
         HEIGHT = screen.get_height()
         
+        # Get the rotation mode from the Rotation object
         self.turret_mode = rotationObject.mode
         
+        # Launching the function according to the rotation mode
         if self.turret_mode == "sentinel":
             self.sentinel_mode(turretObject, mobsObject)
         
@@ -357,14 +494,19 @@ class RotateTurret:
             self.fire_mode(screen, turretObject,
                            mobsObject, refs)
         
+        # Turret positioning
         turret_rect = self.turret_image.get_rect()
         turret_rect.center = (WIDTH//2, HEIGHT//2)
         
+        # Turret surface and rect rotation
         rotated_surface = pygame.transform.rotate(self.turret_image, rotationObject.angle)
         rotated_rect = rotated_surface.get_rect(center=turret_rect.center)
         
+        # Display
         screen.blit(rotated_surface, rotated_rect)
         
+        # The angle value is incremented by a value defined by 
+        # the actual Rotation class mode
         rotationObject.rotate()
 
 class Thunder():

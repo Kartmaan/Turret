@@ -278,14 +278,22 @@ def background() -> pygame.surface.Surface:
     
     return background_img
 
-def seconds_to_hms(seconds):
-        hours, remainder = divmod(seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
+def seconds_to_hms(seconds:float) -> str:
+    """Convert seconds to hh:mm:ss format
 
-        # Formating
-        formatted_time = "{:02}:{:02}:{:06.3f}".format(int(hours), int(minutes), seconds)
+    Args:
+        seconds: Seconds value (time.time())
 
-        return formatted_time
+    Returns:
+        str: seconds in hh:mm:ss format
+    """    
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Formating
+    formatted_time = "{:02}:{:02}:{:06.3f}".format(int(hours), int(minutes), seconds)
+
+    return formatted_time
 
 def debug_mode(screen:pygame.surface.Surface, refs:dict,
                turret_base:pygame.rect.Rect, 
