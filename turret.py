@@ -25,9 +25,9 @@ sounds = get_sounds()
 thunder = get_thunder()
 turret_rotation = RotateTurret()
 
-debug = True
-rain = False
-music_on = False
+debug = False
+rain = True
+music_on = True
 clock = pygame.time.Clock()
 fps = 60
 
@@ -60,6 +60,7 @@ while True:
       # LEFT CLICK
       if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
         mobs.add_mob(screen, pygame.mouse.get_pos(), turret_base, refs)
+      
       # RIGHT CLICK
       if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
         pass

@@ -2,7 +2,25 @@
 sound.py - Sound module
 
 Module containing classes allowing you to load, manipulate 
-and play sounds as well as background music
+and play sounds as well as background music.
+
+All sounds were collected from the freesound.org platform and are 
+royalty free, some of them have been modified on Audacity by myself.
+
+Credits and thanks :
+sentinel : Edited from a sound made by @newlocknew
+alert : Edited from a sound made by @plasterbrain
+deploy : Edited from a sound made by @Hybrid_V
+retract : Edited from a sound made by @Hybrid_V
+spawn : @pepingrillin
+steam : Edited from a sound made by @reinsamba
+fire : @V-ktor
+blast : @EFlexMusic
+rain : @Garuda1982
+wind : @xxamoney27xx
+strong wind : Edited from a sound made by @xxamoney27xx
+thunder : @Kinoton
+music : @SoundFlakes
 """
 from functions.display import pygame
 
@@ -20,7 +38,7 @@ class SoundManager():
     def __init__(self):
         # Paths
         self.paths = {
-            "sentinel" : "assets/sound/sentinel.ogg",
+            "sentinel" : "assets/sound/sentinel.ogg", # 
             "alert" : "assets/sound/alert.ogg",
             "deploy" : "assets/sound/deploy.ogg",
             "retract" : "assets/sound/retract.ogg",
