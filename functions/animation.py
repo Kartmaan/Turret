@@ -539,8 +539,25 @@ class Thunder():
         Returns:
             bool: A boolean
         """        
-        probability = 0.06
+        probability = 0.07
         proba = probability / 100
+        
+        # A lightning bolt is being displayed, it will be 
+        # displayed for a time determined by 
+        # self.lightning_duration. After the time elapses, the 
+        # lightning disappears and the self.after_lightning 
+        # state variable is set to True
+        if self.in_lightning:
+            duration = time.time() - self.lightning_start_time
+            if duration <= self.lightning_duration: # In time
+                return True
+            
+            else: # Deadline
+                self.in_lightning = False
+                self.after_lightning_start_time = time.time()
+                self.after_lightning_duration = random.uniform(2.5,5.5)
+                self.after_lightning = True
+                return False
         
         # The lightning has just disappeared from the screen, 
         # no other lightning must take place for a specific time, 
@@ -556,23 +573,6 @@ class Thunder():
                 sounds.play_sound("thunder")
                 return False
         
-        # A lightning bolt is being displayed, it will be 
-        # displayed for a time determined by 
-        # self.lightning_duration. After the time elapses, the 
-        # lightning disappears and the self.after_lightning 
-        # state variable is set to True
-        if self.in_lightning:
-            duration = time.time() - self.lightning_start_time
-            if duration <= self.lightning_duration: # In time
-                return True
-            
-            else: # Deadline
-                self.in_lightning = False
-                self.after_lightning_start_time = time.time()
-                self.after_lightning_duration = random.uniform(1.5,3.5)
-                self.after_lightning = True
-                return False
-        
         # We assume here that self.in_lightning and 
         # self.after_lightning are False, we nevertheless wait 
         # for the end of the "tunder" sound if it's being played
@@ -586,7 +586,7 @@ class Thunder():
                 self.lightning_displayed += 1
                 self.in_lightning = True
                 self.lightning_start_time = time.time()
-                self.lightning_duration = random.uniform(0.2,1.2)
+                self.lightning_duration = random.uniform(0.2,1.0)
                 return True
             
             # The probability isn't realized. No lightning
@@ -617,7 +617,8 @@ class MakeItRain():
         self.screen = screen
         self.WIDTH = self.screen.get_width()
         self.HEIGHT = self.screen.get_height()
-        self.raindrop_color = (220, 220, 200)
+        self.raindrop_color = (144, 153, 161)
+        self.raindrop_thickness = 1
         self.raindrop_intensity = 40 # Raindrops on screen
         self.in_wind = False # Wind animation in progress
         self.wind_start_time = None
@@ -683,7 +684,7 @@ class MakeItRain():
         raindrops = [self.generate_raindrop() for _ in range(self.raindrop_intensity)]
         
         # Random variation in the length of raindrops
-        raindrop_length = random.randint(2,10)
+        raindrop_length = random.randint(4,13)
         
         # Drawing raindrops
         for raindrop in raindrops:
@@ -692,7 +693,7 @@ class MakeItRain():
                 sounds.fadeout("strong_wind", 1000)
                 pygame.draw.line(self.screen, self.raindrop_color,
                         (raindrop['x'], raindrop['y']),
-                        (raindrop['x'], raindrop['y'] + raindrop_length), 1)
+                        (raindrop['x'], raindrop['y'] + raindrop_length), self.raindrop_thickness)
             
             else: # Wind
                 if not sounds.in_playing("strong_wind") and self.strong_wind_soung_played < 1:
@@ -700,7 +701,7 @@ class MakeItRain():
                     self.strong_wind_soung_played += 1
                 pygame.draw.line(self.screen, self.raindrop_color,
                         (raindrop['x'], raindrop['y']),
-                        (raindrop['x'] - raindrop_length, raindrop['y'] + raindrop_length), 1)
+                        (raindrop['x'] - raindrop_length, raindrop['y'] + raindrop_length), self.raindrop_thickness)
             
             #raindrop['y'] += raindrop['speed']
             
