@@ -13,3 +13,8 @@ https://github.com/Kartmaan/Turret/assets/11463619/4a3c4fba-6ce1-42ef-98fc-e2a97
 
 # Debug mode
 ![debug_mode](https://github.com/Kartmaan/Turret/assets/11463619/a509a42b-4593-4f7c-8091-3b475c5bfe0f)
+
+# Info
+- All the sprites (turrets, base, mobs, blast animation) as well as the background were drawn from simple shapes on Google Draw.
+- The sounds, most of which have been slightly modified/truncated with Audacity, were retrieved from the freesound.org platform, the full credits appear in the header of the sound module
+- The documentation folder contains in particular the architecture of the algorithm managing the appearance of lightning and thunder
